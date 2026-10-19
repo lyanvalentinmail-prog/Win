@@ -178,7 +178,7 @@ resource "libvirt_domain" "win" {
         nv_ram   = "/var/lib/libvirt/qemu/nvram/${var.name}-VARS.fd"
         template = var.uefi_vars_fd
       }
-    } : {
+      } : {
       firmware        = null
       loader          = null
       loader_readonly = null

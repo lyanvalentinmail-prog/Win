@@ -49,3 +49,8 @@ output "advertencias_coste" {
     "Con spot_priority=true Azure puede desalojar la VM en cualquier momento.",
   ]
 }
+
+output "skus_gpu_y_vcpus" {
+  description = "Tabla de SKU de la serie NVadsA10_v5 y sus vCPU reales, para no prometer mas nucleos de los que el SKU da (y para elegir tamano con criterio)."
+  value       = local.limites
+}
