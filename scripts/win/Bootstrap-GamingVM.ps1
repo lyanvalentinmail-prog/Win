@@ -98,7 +98,13 @@ function Invoke-GvmFase {
         $donde = 'n/d'
         if ($_.InvocationInfo) { $donde = "$($_.InvocationInfo.ScriptName):$($_.InvocationInfo.ScriptLineNumber)" }
         $pila = @($_.ScriptStackTrace -split "`n" | Select-Object -First 6) -join ' <- '
-        Write-GvmLog -Nivel ERROR -Fase $Nombre -Mensaje "fase abortada en $donde" -Detalle "$($_.Exception.GetType().Name): $($_.Exception.Message) | pila: $pila"
+        # TargetSite/ParamName son lo unico que distingue 'el ConvertTo-Json' de 'el
+        # Set-Content' cuando el mensaje viene del binder de .NET; la pila CLR remata.
+        $sitio = 'n/d'
+        if ($_.Exception.TargetSite) { $sitio = "$($_.Exception.TargetSite.DeclaringType.Name).$($_.Exception.TargetSite.Name)" }
+        $param = if ($_.Exception.ParamName) { $_.Exception.ParamName } else { 'n/d' }
+        $clr = @($_.Exception.StackTrace -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ } | Select-Object -First 5) -join ' <- '
+        Write-GvmLog -Nivel ERROR -Fase $Nombre -Mensaje "fase abortada en $donde" -Detalle "$($_.Exception.GetType().Name): $($_.Exception.Message) | en: $sitio param: $param | pila: $pila | clr: $clr"
     }
 }
 

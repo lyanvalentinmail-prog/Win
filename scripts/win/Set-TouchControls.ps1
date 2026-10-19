@@ -174,8 +174,15 @@ if ($keys.Count -gt 0 -or $shortcuts.Count -gt 0) {
     if (-not (Test-Path -LiteralPath $staging)) { New-Item -ItemType Directory -Path $staging -Force | Out-Null }
     $archivoKeys = Join-Path $staging 'remapkeys.json'
     $archivoShort = Join-Path $staging 'remapshortcuts.json'
-    [pscustomobject]@{ version = '1.0.0'; remapKeys = [pscustomobject]@{ inOrder = @($keys) } } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $archivoKeys -Encoding UTF8
-    [pscustomobject]@{ version = '1.0.0'; remapShortcuts = [pscustomobject]@{ global = @(); appSpecific = @($shortcuts) } } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $archivoShort -Encoding UTF8
+    # Statements separados a proposito: si algo de aqui falla, la pila tiene que decir cual de
+    # los tres (el documento, la conversion o la escritura), y no una linea con tres operaciones.
+    Write-GvmLog -Nivel DEBUG -Fase $Fase -Mensaje "documento de remapeo: $($keys.Count) teclas, $($shortcuts.Count) atajos"
+    $docKeys = [pscustomobject]@{ version = '1.0.0'; remapKeys = [pscustomobject]@{ inOrder = @($keys) } }
+    $jsonKeys = ConvertTo-Json -InputObject $docKeys -Depth 6
+    Set-Content -LiteralPath $archivoKeys -Value $jsonKeys -Encoding UTF8
+    $docShort = [pscustomobject]@{ version = '1.0.0'; remapShortcuts = [pscustomobject]@{ global = @(); appSpecific = @($shortcuts) } }
+    $jsonShort = ConvertTo-Json -InputObject $docShort -Depth 6
+    Set-Content -LiteralPath $archivoShort -Value $jsonShort -Encoding UTF8
     $remapeosGenerados = $keys.Count + $shortcuts.Count
     Write-GvmLog -Nivel OK -Fase $Fase -Mensaje "remapeos generados en $staging ($remapeosGenerados entradas)" -Detalle 'PowerToys lee estos ficheros al arrancar; el esquema es el observado en la version actual'
     if ($AplicarEnPowerToys -and $powertoys) {
