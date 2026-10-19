@@ -702,21 +702,24 @@ function New-GvmInforme {
     $meta | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $json -Encoding UTF8
 
     $sb = [System.Text.StringBuilder]::new()
-    [void]$sb.AppendLine("# Informe $Nombre")
+    [void]$sb.AppendLine([string]"# Informe $Nombre")
     [void]$sb.AppendLine("")
-    [void]$sb.AppendLine("Generado: $($meta.generadoEl)  ·  Equipo: $($meta.equipo)  ·  SO: $($meta.host.so) (build $($meta.host.build))")
+    $encabezado = "Generado: $($meta.generadoEl)  ·  Equipo: $($meta.equipo)  ·  SO: $($meta.host.so) (build $($meta.host.build))"
+    [void]$sb.AppendLine([string]$encabezado)
     if ($Hallazgos.Count) {
         [void]$sb.AppendLine("")
         [void]$sb.AppendLine("## Resumen")
         foreach ($h in $Hallazgos) {
             $marca = switch ($h.nivel) { 'OK' { '✅' } 'WARN' { '⚠️' } 'ERROR' { '❌' } default { '•' } }
-            [void]$sb.AppendLine("- $marca **$($h.item)** — $($h.detalle)")
+            [void]$sb.AppendLine([string]"- $marca **$($h.item)** — $($h.detalle)")
         }
     }
     [void]$sb.AppendLine("")
     [void]$sb.AppendLine('## Detalle')
     [void]$sb.AppendLine('```json')
-    [void]$sb.AppendLine(($Datos | ConvertTo-Json -Depth 10))
+    # [string] explicito: si $Datos es una coleccion, ConvertTo-Json emite varias lineas y
+    # AppendLine(object[]) no resuelve sobrecarga -> 'Argument types do not match'.
+    [void]$sb.AppendLine([string]($Datos | ConvertTo-Json -Depth 10))
     [void]$sb.AppendLine('```')
     $texto = $sb.ToString()
     $texto | Set-Content -LiteralPath $md -Encoding UTF8
@@ -728,7 +731,15 @@ function New-GvmInforme {
 
 function New-GvmHallazgo {
     [CmdletBinding()]
-    param([Parameter(Mandatory)][string]$Item, [ValidateSet('OK', 'WARN', 'ERROR', 'INFO')][string]$Nivel = 'INFO', [Parameter(Mandatory)][string]$Detalle)
+    param(
+        [Parameter(Mandatory)][string]$Item,
+        # ValidateSet no distingue mayusculas, pero los scripts eligen el nivel con if/switch
+        # y aqui debajo se normaliza a mayusculas para que el informe salga uniforme.
+        [ValidateSet('OK', 'WARN', 'ERROR', 'INFO')][string]$Nivel = 'INFO',
+        # Sin Mandatory: un hallazgo puede no tener detalle, y un string vacio obligatorio
+        # aborta el binding del script entero con 'Cannot bind argument to parameter'.
+        [string]$Detalle = ''
+    )
     [pscustomobject]@{ item = $Item; nivel = $Nivel; detalle = $Detalle }
 }
 

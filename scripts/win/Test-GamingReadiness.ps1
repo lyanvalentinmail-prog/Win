@@ -37,8 +37,17 @@ if (-not $RepoDir) {
 $cfg = $null
 if ($Config) { $cfg = Resolve-GvmConfig -Entrada $Config }
 
-$hallazgos = New-Object System.Collections.Generic.List[object]
-function Add-Hallazgo { param([string]$i, [string]$n, [string]$d) $hallazgos.Add((New-GvmHallazgo -Item $i -Nivel $n -Detalle $d)) }
+# Coleccion de hallazgos: array normal, como en el resto de fases. Una List[object]
+# funciona para acumular, pero se pasa mal a los cmdlets y el informe se quedaba sin datos.
+$script:hallazgos = @()
+function Add-Hallazgo {
+    param([string]$i, [string]$n, [string]$d)
+    $nivel = if ($n -and ('OK', 'WARN', 'ERROR', 'INFO' -contains $n.ToUpperInvariant())) { $n.ToUpperInvariant() } else { 'INFO' }
+    # $script: porque la funcion tiene su propio scope: sin el cualificador el acumulador
+    # viviria solo hasta el final de la llamada y el informe saldria vacio.
+    if (-not $i) { $i = 'sin nombre' }
+    $script:hallazgos += @(New-GvmHallazgo -Item ([string]$i) -Nivel $nivel -Detalle ([string]$d))
+}
 
 $os = Get-CimInstance Win32_OperatingSystem
 $so = [pscustomobject]@{
@@ -200,7 +209,7 @@ $datos = [pscustomobject]@{
 }
 
 if ($Exportar) {
-    $rutas = New-GvmInforme -Nombre 'preparacion' -Datos $datos -Hallazgos @($hallazgos)
+    $rutas = New-GvmInforme -Nombre 'preparacion' -Datos $datos -Hallazgos $hallazgos
 } else { $rutas = $null }
 
 # Tabla en consola (lo que ve el usuario al terminar el bootstrap)

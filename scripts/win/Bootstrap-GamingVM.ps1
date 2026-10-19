@@ -194,15 +194,17 @@ Invoke-GvmFase 'informe' {
 Write-GvmLog -Nivel OK -Mensaje '=== resumen de fases ==='
 foreach ($k in $resumen.Keys) { Write-GvmLog -Mensaje ("  {0,-12} {1}" -f $k, $resumen[$k]) -AlConsola }
 
+$hayFallas = @($resumen.Values | Where-Object { $_ -like 'fallida*' }).Count -gt 0
+$detalleFases = @($resumen.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" } | Sort-Object)
+$hallazgosFin = @(New-GvmHallazgo -Item 'Fases' -Nivel $(if ($hayFallas) { 'WARN' } else { 'OK' }) -Detalle ($detalleFases -join ' | '))
+
 $informe = New-GvmInforme -Nombre 'bootstrap' -Datos ([pscustomobject]@{
     config      = Get-GvmConfigValor -Config $cfg -Ruta 'name'
     proveedor   = Get-GvmConfigValor -Config $cfg -Ruta 'provider'
     fases       = $resumen
     simulacion  = [bool]$Simulacion
     log         = $runtime.LogFile
-}) -Hallazgos @(
-    New-GvmHallazgo -Item 'Fases' -Nivel $(if (@($resumen.Values | Where-Object { $_ -like 'fallida*' }).Count) { 'WARN' } else { 'OK' }) -Detalle ($resumen.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" } | Sort-Object) -ErrorAction SilentlyContinue
-)
+}) -Hallazgos $hallazgosFin
 
 if ($pendientesReinicio.Count -and -not $Simulacion) {
     Write-GvmLog -Nivel WARN -Mensaje "reinicio necesario para: $($pendientesReinicio -join ', ')" -Detalle 'Si ejecutas el bootstrap desde un despliegue automatizado, el paso de reinicio lo lanza el propio script; en manual, reinicia y ejecuta con -Reanudar.'

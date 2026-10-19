@@ -119,18 +119,22 @@ jobs:
             if ($codigo -ne 0) {
               $fallados += "$($caso.Nombre) (exit $codigo)"
               Write-Host "::error::Bootstrap-GamingVM $($caso.Nombre) devolvio $codigo"
-              $log = Get-ChildItem (Join-Path $base 'logs') -Filter '*.log' -ErrorAction SilentlyContinue |
-                Sort-Object LastWriteTime -Descending | Select-Object -First 1
-              if ($log) {
-                # GitHub recorta las anotaciones por check: si volcamos el log entero se
-                # pierden las lineas ERROR (las unicas que explican el fallo) y quedan las
-                # intrascendentes del final. Se mandan primero los errores, luego el cierre.
-                $registro = @(Get-Content -LiteralPath $log.FullName)
-                $claves = @($registro | Where-Object { $_ -match "ERROR|abortada|Exception|fallida" } | Select-Object -Last 14)
-                $cierre = @($registro | Select-Object -Last 6)
-                foreach ($l in @(($claves + $cierre | Select-Object -Unique) | Where-Object { $_.Trim() })) {
-                  $limpio = ($l -replace "[\r\n\t]", " ").Trim() -replace "%", "%25"
-                  Write-Host "::error::log|$limpio"
+              $logs = @(Get-ChildItem (Join-Path $base 'logs') -Filter '*.log' -ErrorAction SilentlyContinue |
+                Sort-Object LastWriteTime -Descending | Select-Object -First 5)
+              if ($logs.Count) {
+                # GitHub recorta las anotaciones por check: volcando el log entero se pierden
+                # las lineas ERROR (las unicas que explican) y quedan las intrascendentes del
+                # final. Cada script de fase escribe su propio log, asi que se miran los cinco
+                # mas recientes y de cada uno solo sus errores.
+                foreach ($lg in $logs) {
+                  $registro = @(Get-Content -LiteralPath $lg.FullName)
+                  $claves = @($registro | Where-Object { $_ -match 'ERROR|abortada|Exception|fallida' } | Select-Object -Last 3)
+                  foreach ($l in @($claves | Where-Object { $_.Trim() })) {
+                    # \s+ evita meter escapes de control en el YAML; el % se escapa porque
+                    # los workflow commands de GitHub interpretan %25 y compañía.
+                    $limpio = ($l -replace '\s+', ' ').Trim() -replace '%', '%25'
+                    Write-Host "::error::log|$($lg.Name): $limpio"
+                  }
                 }
               } else {
                 Write-Host '::error::no hay log en el BaseDir: el script murio antes de abrirlo'
