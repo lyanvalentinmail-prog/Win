@@ -122,9 +122,15 @@ jobs:
               $log = Get-ChildItem (Join-Path $base 'logs') -Filter '*.log' -ErrorAction SilentlyContinue |
                 Sort-Object LastWriteTime -Descending | Select-Object -First 1
               if ($log) {
-                Get-Content -LiteralPath $log.FullName -Tail 60 | ForEach-Object {
-                  $limpio = ($_ -replace '[\r\n\t]', ' ').Trim()
-                  if ($limpio) { Write-Host "::error::log|$limpio" }
+                # GitHub recorta las anotaciones por check: si volcamos el log entero se
+                # pierden las lineas ERROR (las unicas que explican el fallo) y quedan las
+                # intrascendentes del final. Se mandan primero los errores, luego el cierre.
+                $registro = @(Get-Content -LiteralPath $log.FullName)
+                $claves = @($registro | Where-Object { $_ -match "ERROR|abortada|Exception|fallida" } | Select-Object -Last 14)
+                $cierre = @($registro | Select-Object -Last 6)
+                foreach ($l in @(($claves + $cierre | Select-Object -Unique) | Where-Object { $_.Trim() })) {
+                  $limpio = ($l -replace "[\r\n\t]", " ").Trim() -replace "%", "%25"
+                  Write-Host "::error::log|$limpio"
                 }
               } else {
                 Write-Host '::error::no hay log en el BaseDir: el script murio antes de abrirlo'

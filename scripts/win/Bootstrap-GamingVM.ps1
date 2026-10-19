@@ -93,7 +93,12 @@ function Invoke-GvmFase {
     } catch {
         Set-GvmCheckpoint -Fase $Nombre -Estado 'fallida' -Mensaje $_.Exception.Message
         $resumen[$Nombre] = "fallida: $($_.Exception.Message)"
-        Write-GvmLog -Nivel ERROR -Fase $Nombre -Mensaje 'fase abortada' -Detalle $_.ToString()
+        # Sin la posicion y la pila, 'fase abortada :: Argument types do not match' no dice
+        # donde mirar: se añade el ScriptName:Line y las primeras lineas de la pila.
+        $donde = 'n/d'
+        if ($_.InvocationInfo) { $donde = "$($_.InvocationInfo.ScriptName):$($_.InvocationInfo.ScriptLineNumber)" }
+        $pila = @($_.ScriptStackTrace -split "`n" | Select-Object -First 6) -join ' <- '
+        Write-GvmLog -Nivel ERROR -Fase $Nombre -Mensaje "fase abortada en $donde" -Detalle "$($_.Exception.GetType().Name): $($_.Exception.Message) | pila: $pila"
     }
 }
 

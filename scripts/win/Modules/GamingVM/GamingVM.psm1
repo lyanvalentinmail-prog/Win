@@ -498,7 +498,9 @@ function Install-GvmWingetApp {
         [Parameter(Mandatory)][string]$Id,
         [string]$Version,
         [ValidateSet('instalar', 'actualizar', 'verificar')][string]$Modo = 'instalar',
-        [ValidateSet('machine', 'user')][string]$Scope = 'machine',
+        # Vacio = "winget que elija el alcance". El catalogo solo declara 'scope' en
+        # algunas apps, y un ValidateSet sobre '' hacia fallar la fase antes de instalar.
+        [string]$Scope = '',
         [string[]]$SilentFlags = @(),
         [int]$MaxRetries = 2
     )
@@ -519,7 +521,12 @@ function Install-GvmWingetApp {
         'verificar'  { $accion = 'list' }
     }
     $argsBase = @('--id', $Id, '--exact', '--source', 'winget', '--accept-package-agreements', '--accept-source-agreements', '--disable-interactivity')
-    if ($accion -ne 'list') { $argsBase += @('--scope', $Scope) }
+    if ($accion -ne 'list' -and $Scope) {
+        if ($Scope -notin @('machine', 'user')) {
+            throw "Scope de instalacion invalido para '$Id': '$Scope' (winget solo acepta 'machine' o 'user'; dejalo vacio para que decida winget)."
+        }
+        $argsBase += @('--scope', $Scope.ToLowerInvariant())
+    }
     if ($Version) { $argsBase += @('--version', $Version) }
     if ($accion -ne 'list') { $argsBase += @('--silent') }
     if ($SilentFlags) { $argsBase += $SilentFlags }
@@ -658,7 +665,15 @@ function New-GvmInforme {
     param(
         [Parameter(Mandatory)][string]$Nombre,
         [Parameter(Mandatory)]$Datos,
-        [pscustomobject[]]$Hallazgos = @()
+        # Sin tipar a [pscustomobject[]]: convertir un List[object] a ese tipo puede reventar
+        # con 'Argument types do not match' fuera de nuestro codigo, y el informe es justo lo
+        # que tiene que sobrevivir a un fallo de las fases.
+        $Hallazgos = @()
+    )
+    $Hallazgos = @(
+        @($Hallazgos) | Where-Object { $null -ne $_ } | ForEach-Object {
+            if ($_ -is [System.Collections.IDictionary]) { [pscustomobject]$_ } else { $_ }
+        }
     )
     $rutas = Get-GvmPaths
     $stamp = (Get-Date).ToString('yyyyMMdd-HHmmss')
