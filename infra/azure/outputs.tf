@@ -4,7 +4,8 @@ output "ip_publica" {
 }
 
 output "nombre_vm" {
-  value = azurerm_windows_virtual_machine.win.name
+  description = "Nombre de la VM en Azure, el mismo de la interfaz y del disco: es lo que espera la az CLI."
+  value       = azurerm_windows_virtual_machine.win.name
 }
 
 output "region" {
@@ -13,7 +14,8 @@ output "region" {
 }
 
 output "grupo_recursos" {
-  value = azurerm_resource_group.win.name
+  description = "Grupo de recursos que contiene todo, para 'az ... -g' y para borrar la instalacion entera."
+  value       = azurerm_resource_group.win.name
 }
 
 output "sku" {
@@ -40,6 +42,7 @@ output "comando_bootstrap" {
 }
 
 output "advertencias_coste" {
+  description = "Lo que se factura aunque no juegues, para que nadie lance 'terraform apply' con la duda."
   value = [
     "La VM, los discos gestionados, la IP publica Standard y el egreso se facturan por hora/GB aunque no juegues.",
     "deallocate libera la VM pero el disco de datos sigue facturandose; si no la usas en dias, deallocate y considera detener el facturamiento de la IP.",

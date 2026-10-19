@@ -89,13 +89,15 @@ variable "data_disk_sku" {
 }
 
 variable "vnet_cidr" {
-  type    = string
-  default = "10.20.0.0/16"
+  description = "Espacio de direcciones de la VNet. Red privada valida y sin solaparse con tu red local si anades una VPN despues."
+  type        = string
+  default     = "10.20.0.0/16"
 }
 
 variable "subnet_cidr" {
-  type    = string
-  default = "10.20.1.0/24"
+  description = "Rango de la subred dentro de vnet_cidr. Azure reserva 5 direcciones por subred."
+  type        = string
+  default     = "10.20.1.0/24"
 }
 
 variable "rdp_port" {

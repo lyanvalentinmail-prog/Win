@@ -108,7 +108,7 @@ resource "aws_instance" "win" {
       error_message = "g4ad (AMD) + streaming de juego: no lo dejes por defecto. El driver y el codificador AMF hay que verificarlos dentro de la VM (Install-GpuDriver.ps1) y muchos titulos antitrampas no soportan VM."
     }
     precondition {
-      condition     = var.rdp_allowed_cidrs == [] || alltrue([for c in var.rdp_allowed_cidrs : can(cidrhost(c, 0))])
+      condition     = length(var.rdp_allowed_cidrs) == 0 || alltrue([for c in var.rdp_allowed_cidrs : can(cidrhost(c, 0))])
       error_message = "Cada entrada de rdp_allowed_cidrs debe ser un CIDR valido (p. ej. 203.0.113.10/32); '0.0.0.0/0' esta prohibido por politica de seguridad."
     }
     precondition {

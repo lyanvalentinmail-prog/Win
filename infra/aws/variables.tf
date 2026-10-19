@@ -40,8 +40,9 @@ variable "key_name" {
 }
 
 variable "rdp_port" {
-  type    = number
-  default = 3389
+  description = "Puerto TCP por el que el grupo de seguridad acepta RDP. Cambialo solo si tambien mueves la regla de entrada y el cliente."
+  type        = number
+  default     = 3389
 }
 
 variable "rdp_allowed_cidrs" {
@@ -57,8 +58,9 @@ variable "associate_public_ip" {
 }
 
 variable "os_disk_gb" {
-  type    = number
-  default = 128
+  description = "GiB del volumen EBS raiz. Windows pide 64 GiB como minimo; con 128 hay sitio para actualizaciones y aplicaciones."
+  type        = number
+  default     = 128
 }
 
 variable "data_disk_gb" {
@@ -68,8 +70,9 @@ variable "data_disk_gb" {
 }
 
 variable "root_volume_type" {
-  type    = string
-  default = "gp3"
+  description = "Tipo de volumen EBS del disco raiz. gp3 es el que se comporta bien con un sistema operativo; ve a io2 solo si necesitas IOPS provisionadas."
+  type        = string
+  default     = "gp3"
   validation {
     condition     = contains(["gp3", "gp2", "io2"], var.root_volume_type)
     error_message = "gp3 (recomendado), gp2 o io2. magnetic/standard no: el arranque y las cargas serian inusables."
@@ -77,8 +80,9 @@ variable "root_volume_type" {
 }
 
 variable "data_volume_type" {
-  type    = string
-  default = "gp3"
+  description = "Tipo de volumen EBS del disco de datos (los juegos). gp3 de sobra; io2 para picos de carga de mundos."
+  type        = string
+  default     = "gp3"
 }
 
 variable "ebs_optimized" {
@@ -94,6 +98,7 @@ variable "enable_game_stream" {
 }
 
 variable "tags" {
-  type    = map(string)
-  default = {}
+  description = "Etiquetas aplicadas a todos los recursos. Aqui no van credenciales, IPs de administracion ni datos sensibles."
+  type        = map(string)
+  default     = {}
 }

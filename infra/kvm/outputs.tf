@@ -1,5 +1,6 @@
 output "dominio" {
-  value = libvirt_domain.win.name
+  description = "Nombre del dominio libvirt de la VM: lo que esperan virsh, virt-viewer y los scripts del host."
+  value       = libvirt_domain.win.name
 }
 
 output "gpu_asignada" {
@@ -20,6 +21,7 @@ output "montar_medios_de_instalacion" {
 }
 
 output "comandos_utiles" {
+  description = "Comandos de libvirt para averiguar la IP, abrir la consola de instalacion, tomar instantanea y ver el disco."
   value = [
     "virsh domifaddr ${libvirt_domain.win.name}          # IP de la VM",
     "virt-viewer -c qemu:///system ${libvirt_domain.win.name}   # consola grafica para la instalacion",
@@ -29,6 +31,7 @@ output "comandos_utiles" {
 }
 
 output "recordatorios" {
+  description = "Limitaciones propias de KVM (memoria del host, red, licencias de GeForce, instantaneas en caliente)."
   value = [
     "Deja memoria y CPU para el host: una VM que se come el host degrada la propia experiencia remota.",
     "Con network_name (NAT) la latencia anadida es pequena, pero el cliente debe apuntar al host; con bridge la VM tiene su propia IP en la LAN.",

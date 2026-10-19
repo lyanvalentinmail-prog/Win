@@ -40,8 +40,9 @@ variable "ram_mb" {
 }
 
 variable "os_disk_gb" {
-  type    = number
-  default = 128
+  description = "Tamano maximo en GiB del qcow2 del disco del SO. Crece bajo demanda: 64 es el minimo de Windows y 128 lo comodo."
+  type        = number
+  default     = 128
 }
 
 variable "data_disk_gb" {
@@ -63,8 +64,9 @@ variable "vtpm" {
 }
 
 variable "autostart" {
-  type    = bool
-  default = false
+  description = "Si libvirt debe encender la VM al arrancar el host. Con un equipo compartido interesa dejarlo en false."
+  type        = bool
+  default     = false
 }
 
 variable "network_name" {

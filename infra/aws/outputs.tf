@@ -1,13 +1,16 @@
 output "dns_publico" {
-  value = aws_instance.win.public_dns
+  description = "DNS publico que AWS asigna a la instancia; vacio si associate_public_ip=false o si pones una Elastic IP propia."
+  value       = aws_instance.win.public_dns
 }
 
 output "ip_publica" {
-  value = aws_instance.win.public_ip
+  description = "IP publica asignada. Es efimera al parar y arrancar: fija una Elastic IP si el cliente la tiene apuntada."
+  value       = aws_instance.win.public_ip
 }
 
 output "id_instancia" {
-  value = aws_instance.win.id
+  description = "ID de la instancia (i-...), lo que esperan scripts/deploy/aws-ssm.ps1 y 'aws ec2 get-password-data'."
+  value       = aws_instance.win.id
 }
 
 output "obtener_contrasena_inicial" {
@@ -19,7 +22,8 @@ output "obtener_contrasena_inicial" {
 }
 
 output "siguiente_paso" {
-  value = <<-EOT
+  description = "Los tres pasos que quedan despues de 'terraform apply': esperar el 2/2, copiar el config y entregar el bootstrap."
+  value       = <<-EOT
     1) Espera a que la instancia esté 'running' y el estado de chequeo 2/2:
          aws ec2 describe-instances --instance-ids $(terraform output -raw id_instancia) --query 'Reservations[0].Instances[0].State.Name'
     2) Entrega el bootstrap por SSM (sin abrir puertos) o por RDP:
