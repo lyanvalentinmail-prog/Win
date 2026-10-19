@@ -115,4 +115,53 @@ variable "gpu_hostdev_ids" {
   type        = list(string)
   default     = []
   description = "Direcciones PCI (0000:01:00.0) de la GPU y su audio, ya atadas a vfio-pci. [] = sin GPU: el proyecto lo informa, no lo simula."
+
+  validation {
+    condition = alltrue([
+      for id in var.gpu_hostdev_ids : can(regex("^[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}[.][0-9]$", lower(id)))
+    ])
+    error_message = "Formato dominio:bus:slot.funcion en hexadecimal, p. ej. 0000:01:00.0 (es lo que devuelve 'lspci -Dnn')."
+  }
+}
+
+variable "cpu_mode" {
+  type        = string
+  default     = "host-passthrough"
+  description = "Modo de CPU expuesto al guest. host-passthrough rinde mas (y es lo que se espera en gaming); host-model es el portable si la VM viajara a otro host."
+  validation {
+    condition     = contains(["host-passthrough", "host-model", "custom"], var.cpu_mode)
+    error_message = "host-passthrough, host-model o custom."
+  }
+}
+
+variable "disk_cache" {
+  type        = string
+  default     = "writeback"
+  description = "Modo de cache del driver de disco del guest. writeback rinde mas; none es lo seguro si el host no tiene SAPI/SBWA en el disco."
+  validation {
+    condition     = contains(["writeback", "none", "directsync", "unsafe", "both"], var.disk_cache)
+    error_message = "writeback, none, directsync, unsafe o both (son los valores que acepta libvirt)."
+  }
+}
+
+variable "virtio_queues" {
+  type        = number
+  default     = 4
+  description = "Colas multihard del driver virtio-net. Subelo si el host tiene muchos nucleos y el juego genera mucho trafico; 0 lo deja en el valor por defecto del host."
+  validation {
+    condition     = var.virtio_queues >= 0 && var.virtio_queues <= 128
+    error_message = "0-128 colas."
+  }
+}
+
+variable "uefi_code_fd" {
+  type        = string
+  default     = "/usr/share/OVMF/OVMF_CODE.secboot.fd"
+  description = "Firmware OVMF (codigo) con Secure Boot. La ruta cambia por distribucion: en Fedora/Arch suele ser /usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd."
+}
+
+variable "uefi_vars_fd" {
+  type        = string
+  default     = "/usr/share/OVMF/OVMF_VARS.4m.fd"
+  description = "Plantilla de variables UEFI que libvirt copia por VM (ahi se guardan Secure Boot y el orden de arranque)."
 }

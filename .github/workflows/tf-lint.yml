@@ -59,22 +59,54 @@ jobs:
         run: terraform init -backend=false -input=false
 
       - name: terraform validate
+        env:
+          MOD: infra/${{ matrix.modulo }}
         run: |
-          # 'terraform validate' escribe sus diagnosticos en un formato que el matcher de
-          # Actions no anota; el JSON si permite decir ARCHIVO + LINEA + MENSAJE, que es lo
-          # que hace que un fallo de validacion se pueda leer en el PR.
-          terraform validate -json >validate.json 2>validate.err || true
-          cat validate.err
-          errores=$(jq '[.diagnostics[] | select(.severity == "error")] | length' validate.json)
-          avisos=$(jq '[.diagnostics[] | select(.severity == "warning")] | length' validate.json)
-          jq -r '.diagnostics[] | select(.severity == "error")
-                 | "::error file=infra/${{ matrix.modulo }}/\(.range.filename),line=\(.range.start.line)::\(.summary): \(.detail)"' validate.json | head -25
-          jq -r '.diagnostics[] | select(.severity == "warning")
-                 | "::warning file=infra/${{ matrix.modulo }}/\(.range.filename),line=\(.range.start.line)::\(.summary)"' validate.json | head -15
-          if [ "${errores:-0}" -gt 0 ]; then
-            echo "::error::terraform validate: $errores errores y $avisos avisos en infra/${{ matrix.modulo }}"
+          # En modo -json Terraform no sale con codigo distinto de 0 cuando hay errores de
+          # validacion: hay que leer los diagnosticos. Y el wrapper de setup-terraform puede
+          # mezclar su propio mensaje con el JSON, asi que se busca el primer '{'.
+          rc=0
+          terraform validate -json >validate.json 2>validate.err || rc=$?
+          python3 - <<'PY'
+          import json, os, re
+          texto = open('validate.json', encoding='utf-8', errors='replace').read()
+          mod = os.environ.get('MOD', '.')
+          ini = texto.find('{')
+          n = 0
+          if ini < 0:
+              err = open('validate.err', encoding='utf-8', errors='replace').read()
+              uno = re.sub(r'\s+', ' ', (texto + ' ' + err))[:900]
+              print('::error::sin JSON de validacion; salida cruda: ' + uno.replace('%', '%25'))
+          else:
+              try:
+                  datos = json.loads(texto[ini:])
+              except Exception as exc:  # JSON roto: volcarlo tal cual
+                  print('::error::validate.json ilegible (' + str(exc) + ')')
+                  datos = {}
+              for d in datos.get('diagnostics', []):
+                  r = d.get('range') or {}
+                  linea = (r.get('start') or {}).get('line') or 1
+                  fich = r.get('filename') or 'main.tf'
+                  msg = re.sub(r'\s+', ' ', f"{d.get('summary', '')}: {d.get('detail', '')}").replace('%', '%25')[:900]
+                  if d.get('severity') == 'error':
+                      n += 1
+                      print(f'::error file={mod}/{fich},line={linea}::{msg}')
+                  else:
+                      print(f'::warning file={mod}/{fich},line={linea}::{msg}')
+              if n:
+                  print('::error::' + str(n) + ' errores de validacion en ' + mod)
+          open('errores.txt', 'w').write(str(n))
+          PY
+          n=$(cat errores.txt 2>/dev/null || echo 0)
+          if [ "$n" -gt 0 ]; then
             exit 1
           fi
+          if [ "$rc" -ne 0 ]; then
+            echo "::error::terraform validate fallo de forma inesperada (rc=$rc)"
+            cat validate.json validate.err
+            exit "$rc"
+          fi
+          echo "terraform validate: sin errores en ${{ matrix.modulo }}"
 
       - uses: terraform-linters/setup-tflint@v4
         with:

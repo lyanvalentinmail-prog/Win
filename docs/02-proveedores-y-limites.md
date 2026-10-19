@@ -57,7 +57,9 @@ Cosas que se rompen si las ignoras:
   (serie 19.6 LTS o 20.x), no el driver GeForce de consumo. `Install-GpuDriver.ps1`
   comprueba el estado PnP del adaptador y lo declara.
 - **Win11 pide Trusted Launch** (vTPM + Secure Boot), 4 GiB, 2 vCPU, 64 GB. El módulo de
-  Terraform lo pone (`security_type = "TrustedLaunch"`).
+  Terraform lo pone con `secure_boot_enabled = true` + `vtpm_enabled = true`, que es como se
+  escribe en el provider `azurerm` 4.x; el viejo `security_type = "TrustedLaunch"` (3.x) ya no
+  existe y `terraform validate` lo rechaza.
 - **Capacidad regional limitada**: si `az vm list-skus` no lo lista o el deploy falla con
   `ResourceAllocationFailure`, no es un bug del repo.
 - **`NVv4` (GPU de series anteriores) está retirado** (30/09/2026): no lo uses como destino.

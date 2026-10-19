@@ -39,10 +39,10 @@ locals {
 }
 
 resource "azurerm_network_interface" "win" {
-  name                          = "nic-${var.name}"
-  location                      = azurerm_resource_group.win.location
-  resource_group_name           = azurerm_resource_group.win.name
-  enable_accelerated_networking = var.accelerated_networking
+  name                           = "nic-${var.name}"
+  location                       = azurerm_resource_group.win.location
+  resource_group_name            = azurerm_resource_group.win.name
+  accelerated_networking_enabled = var.accelerated_networking  # en azurerm >=4 se llamo asi (antes enable_accelerated_networking)
 
   ip_configuration {
     name                          = "ipcfg1"
@@ -54,22 +54,24 @@ resource "azurerm_network_interface" "win" {
 }
 
 resource "azurerm_windows_virtual_machine" "win" {
-  name                     = var.name
-  location                 = azurerm_resource_group.win.location
-  resource_group_name      = azurerm_resource_group.win.name
-  network_interface_ids    = [azurerm_network_interface.win.id]
-  size                     = var.vm_size
-  admin_username           = var.vm_admin_user
-  admin_password           = var.vm_admin_password
-  computer_name            = var.name
-  timezone                 = var.timezone
-  provision_vm_agent       = true
-  enable_automatic_updates = var.automatic_updates
-  priority                 = var.spot_priority ? "Spot" : "Regular"
-  eviction_policy          = var.spot_priority ? "Deallocate" : null
-  patch_mode               = var.automatic_updates ? "AutomaticByPlatform" : "Manual"
-  security_type            = "TrustedLaunch"
-  vtpm_enabled             = true
+  name                      = var.name
+  location                  = azurerm_resource_group.win.location
+  resource_group_name       = azurerm_resource_group.win.name
+  network_interface_ids     = [azurerm_network_interface.win.id]
+  size                      = var.vm_size
+  admin_username            = var.vm_admin_user
+  admin_password            = var.vm_admin_password
+  computer_name             = var.name
+  timezone                  = var.timezone
+  provision_vm_agent        = true
+  priority                  = var.spot_priority ? "Spot" : "Regular"
+  eviction_policy           = var.spot_priority ? "Deallocate" : null
+  automatic_updates_enabled = var.automatic_updates  # azurerm >=4: antes enable_automatic_updates
+  patch_mode                = var.automatic_updates ? "AutomaticByPlatform" : "Manual"
+  # Trusted Launch en azurerm >=4 son estas dos banderas; el argumento security_type
+  # (v3) ya no existe en el recurso y terraform validate lo rechaza.
+  secure_boot_enabled = true
+  vtpm_enabled        = true
 
   source_image_reference {
     publisher = local.img.publisher
@@ -128,7 +130,7 @@ resource "azurerm_managed_disk" "datos" {
 resource "azurerm_virtual_machine_data_disk_attachment" "datos" {
   count = var.data_disk_gb > 0 ? 1 : 0
 
-  managed_disk_ref   = azurerm_managed_disk.datos[0].id
+  managed_disk_id    = azurerm_managed_disk.datos[0].id
   virtual_machine_id = azurerm_windows_virtual_machine.win.id
   lun                = 0
   caching            = "None"

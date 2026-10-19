@@ -71,6 +71,29 @@ documentación de límites por proveedor y por función.
   función, gaming y antitrampas, medición, seguridad, requisitos, prueba de aceptación e
   ideas evaluadas con su motivo de descarte.
 
+### Corregido
+
+Detectado por la propia integracion continua del repo (los tres frentes que fallaban en el
+primer push) y confirmado contra la documentacion de cada proveedor:
+
+- **Parseo de los `.ps1`**: cuatro literales `"$id: ..."` en `Install-Apps.ps1` (PowerShell lo
+  lee como referencia de ambito y aborta), un array literal sin `@(...)` en el `param()` de
+  `Preparar-MandoAndroide.ps1` y `Company` en el manifiesto `GamingVM.psd1` (miembro valido en
+  PS 7, letal en la 5.1: `Import-Module` se cae y el modulo no carga).
+- **Comprobacion de `-WhatIf`** en el humo de Windows: leia una propiedad que
+  `Get-Command <ruta.ps1>` no expone; ahora se decide con el AST del `CmdletBinding`.
+- **Terraform**: los modulos de Azure usaban nombres de argumento de `azurerm` 3.x
+  (`enable_accelerated_networking`, `enable_automatic_updates`, `security_type`,
+  `managed_disk_ref`), todos renombrados o retirados en 4.x; `infra/kvm` estaba escrito con la
+  sintaxis de bloques de `dmacvicar/libvirt` 0.7 y se reescribio a los atributos anidados de
+  0.9 (que es la version que instala el pin `~> 0.9`), anadiendo `cpu_mode`, `disk_cache`,
+  `virtio_queues`, `uefi_code_fd` y `uefi_vars_fd`.
+- **`terraform fmt`**: alineado real de los bloques de argumentos y de los cierres de
+  expresiones multinea.
+- **Validador**: reglas nuevas para lo que antes solo veia el runner (literales sin cerrar,
+  aqui-strings, `$var:` dentro de comillas, listas en `param()`, miembros del manifiesto) y el
+  diff de `fmt`/los diagnosticos de `validate` convertidos en anotaciones del check.
+
 ### Conocido
 
 - Los números de versión y hashes del catálogo son un **snapshot de 2026-10-18**: caducan.
@@ -80,6 +103,8 @@ documentación de límites por proveedor y por función.
 - La instalación de apps que requieren la Microsoft Store, drivers con licencia propia o
   lanzadores con cuenta se reporta como `pendiente-manual`: es deliberado.
 - `infra/kvm` requiere que el host tenga IOMMU/VFIO preparado; el módulo no lo configura y
-  lo dice en su propio README.
+  lo dice en su propio README. Ese README fija ademas la version del provider a la que
+  pertenece su sintaxis (0.9.x): con 0.7/0.8 el modulo no valida, y no es un bug sino dos
+  esquemas distintos.
 
 [0.1.0]: https://github.com/lyanvalentinmail-prog/Win/releases/tag/v0.1.0
