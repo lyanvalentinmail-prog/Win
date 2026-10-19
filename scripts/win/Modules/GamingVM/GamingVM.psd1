@@ -17,8 +17,7 @@
         'Get-GvmGpuInfo', 'Test-GvmDirectXDisponible',
         'Get-GvmWingetComando', 'Install-GvmWingetApp', 'Get-GvmAppInstalada', 'Test-GvmFirma',
         'New-GvmInforme', 'New-GvmHallazgo',
-        'Set-GvmTareaProgramada', 'Get-GvmSesionActual', 'Get-GvmCpuResumen',
-        'ConvertTo-GvmLlano', 'ConvertTo-GvmJson'
+        'Set-GvmTareaProgramada', 'Get-GvmSesionActual', 'Get-GvmCpuResumen'
     )
     CmdletsToExport   = @()
     VariablesToExport = @()

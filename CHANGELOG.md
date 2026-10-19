@@ -108,9 +108,10 @@ primer push) y confirmado contra la documentacion de cada proveedor:
     enumerable esperando `KeyValuePair<string,object>` y un `OrderedDictionary` entrega
     `DictionaryEntry` → `ArgumentException: Argument types do not match` sin marco de script.
     Afectaba a `remapshortcuts.json`/`remapkeys.json` (PowerToys), a `apps.json` (Sunshine) y a
-    la salida de `Test-ConexionRemota.ps1`. Añadidos `ConvertTo-GvmLlano` y
-    `ConvertTo-GvmJson` en el módulo: normalizan a `[pscustomobject]` (conserva el orden de
-    claves) antes de serializar, y los tres sitios pasan por ahí.
+    la salida de `Test-ConexionRemota.ps1`. Los tres sitios construyen ahora el documento con
+    literales `[pscustomobject]` (conserva el orden de claves y se serializa por el camino
+    normal), y en el módulo queda escrita la regla para no volver a meter un `[ordered]`
+    dentro de una colección que acabe en `ConvertTo-Json`.
   - `Invoke-GvmFase` solo registraba el mensaje de la excepción; ahora guarda
     `ScriptName:linea` y las seis primeras líneas de la pila, que es como se localizaron estos
     cuatro fallos.

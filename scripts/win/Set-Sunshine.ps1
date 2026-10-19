@@ -161,7 +161,7 @@ if ($EscribirAppsJson) {
         }
     }
     if ($juegos.Count -gt 0) {
-        ConvertTo-GvmJson -InputObject @{ env = @{}; apps = $juegos } -Depth 6 | Set-Content -LiteralPath $appsRuta -Encoding UTF8
+        [pscustomobject]@{ env = [pscustomobject]@{}; apps = @($juegos) } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $appsRuta -Encoding UTF8
         $detalle += " · apps.json con $($juegos.Count) accesos (formato observado en Sunshine 2026.x; si tu version cambia el esquema, usa la web)"
     } else {
         $detalle += ' · apps.json omitido: ningun lanzador instalado todavia'

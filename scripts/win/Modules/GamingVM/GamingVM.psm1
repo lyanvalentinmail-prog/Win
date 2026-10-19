@@ -775,52 +775,13 @@ function Set-GvmTareaProgramada {
     }
 }
 
-function ConvertTo-GvmLlano {
-    <#
-      .SYNOPSIS
-        Copia un documento dejando [pscustomobject] en cada nivel (nunca OrderedDictionary suelto).
-      .DESCRIPTION
-        ConvertTo-Json serializa un [ordered] de primer nivel o como valor suelto, pero si el
-        OrderedDictionary aparece DENTRO de una coleccion el writer recorre el enumerable y pide
-        KeyValuePair<string,object>: OrderedDictionary entrega DictionaryEntry y .NET responde
-        'Argument types do not match' sin dejar ni un marco de script en la pila (cuesta horas
-        de CI encontrarlo). [pscustomobject] conserva el orden de las claves y se serializa por
-        el camino normal, asi que los ficheros que leen PowerToys o Sunshine se pasan por aqui.
-    #>
-    [CmdletBinding()]
-    param($Valor)
-    if ($null -eq $Valor) { return $null }
-    if ($Valor -is [System.Collections.IDictionary]) {
-        $plano = [ordered]@{}
-        foreach ($clave in @($Valor.Keys)) { $plano[[string]$clave] = ConvertTo-GvmLlano -Valor $Valor[$clave] }
-        return [pscustomobject]$plano
-    }
-    if ($Valor -isnot [string] -and $Valor -is [System.Collections.IEnumerable]) {
-        $lista = @()
-        foreach ($item in @($Valor)) { $lista += ,(ConvertTo-GvmLlano -Valor $item) }
-        return ,$lista
-    }
-    return $Valor
-}
-
-function ConvertTo-GvmJson {
-    <#
-      .SYNOPSIS
-        ConvertTo-Json sobre el documento normalizado por ConvertTo-GvmLlano.
-      .PARAMETER InputObject
-        Hashtable, [ordered] u objeto que se va a escribir en disco.
-    #>
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory)][object]$InputObject,
-        [int]$Depth = 8,
-        [switch]$Compress
-    )
-    $plano = ConvertTo-GvmLlano -Valor $InputObject
-    if ($Compress) { return ($plano | ConvertTo-Json -Depth $Depth -Compress) }
-    return ($plano | ConvertTo-Json -Depth $Depth)
-}
-
+# Regla para cualquier documento que acabe en un ConvertTo-Json: dentro de una coleccion
+# (array o List) solo puede haber [pscustomobject] o valores simples. Un OrderedDictionary —
+# lo que produce [ordered]@{}-- dentro de una coleccion hace que el writer de .NET pida
+# KeyValuePair<string,object>, reciba DictionaryEntry y lance ArgumentException 'Argument types
+# do not match' sin dejar ni un marco de script util en la pila. De primer nivel o como valor
+# suelto de una clave, si funciona; anidado en una coleccion, no.
+#
 function Get-GvmCpuResumen {
     [CmdletBinding()] param()
     $cs = Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction SilentlyContinue
