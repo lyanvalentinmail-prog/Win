@@ -23,7 +23,7 @@ param(
     [Parameter(Mandatory)][string]$HostVM,
     [ValidateSet('rdp', 'moonlight', 'both')][string]$Canal = 'both',
     [string]$Perfil = '',
-    [int[]]$PuertosMoonlight = 47984, 47989, 48010
+    [int[]]$PuertosMoonlight = @(47984, 47989, 48010)
 )
 
 Set-StrictMode -Version 1.0   # 1.0: se leen propiedades opcionales de JSON

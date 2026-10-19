@@ -108,14 +108,14 @@ foreach ($id in $ids) {
         }
         if ($app.compatibilidad.requiereGpu -and -not $gpu.Presente) {
             if ($skipNoCompat) { $omitidas++; $resultados.Add([pscustomobject]@{ Id = $id; Estado = 'omitida'; Detalle = 'requiere GPU y el host no la ofrece' }); continue }
-            Write-GvmLog -Nivel WARN -Fase $Fase -Mensaje "$id: requiere GPU inexistente y skipUnsupported=false: se intentara igualmente"
+            Write-GvmLog -Nivel WARN -Fase $Fase -Mensaje "$($id): requiere GPU inexistente y skipUnsupported=false: se intentara igualmente"
         }
         if ($app.compatibilidad.requiereStore -and -not $tieneStore) {
             $omitidas++; $resultados.Add([pscustomobject]@{ Id = $id; Estado = 'omitida'; Detalle = 'requiere Microsoft Store, no presente en esta edicion' }); continue
         }
         if ($app.compatibilidad.bloqueadoEnVm) {
             $pendientes++; $resultados.Add([pscustomobject]@{ Id = $id; Estado = 'bloqueada-en-vm'; Detalle = $app.compatibilidad.nota })
-            Write-GvmLog -Nivel WARN -Fase $Fase -Mensaje "$id: bloqueada en VM ($($app.compatibilidad.nota))"
+            Write-GvmLog -Nivel WARN -Fase $Fase -Mensaje "$($id): bloqueada en VM ($($app.compatibilidad.nota))"
             continue
         }
     }
@@ -123,7 +123,7 @@ foreach ($id in $ids) {
     if ($app.instalacion.metodo -ne 'winget') {
         $pendientes++
         $resultados.Add([pscustomobject]@{ Id = $id; Estado = 'pendiente-manual'; Detalle = "metodo '$($app.instalacion.metodo)': el proyecto no lo automatiza ($($app.instalacion.nota))" })
-        Write-GvmLog -Fase $Fase -Mensaje "$id: accion manual documentada ($($app.instalacion.metodo))"
+        Write-GvmLog -Fase $Fase -Mensaje "$($id): accion manual documentada ($($app.instalacion.metodo))"
         continue
     }
     if (-not $wingetDisponible) {
@@ -134,7 +134,7 @@ foreach ($id in $ids) {
         $o = Test-GvmOrigenPermitido -Url $app.fuente.descargaDirecta -SourcesPath (Join-Path $RepoDir 'apps\sources.json')
         if (-not $o.Permitido) {
             $fallidas++; $resultados.Add([pscustomobject]@{ Id = $id; Estado = 'rechazada-fuente'; Detalle = $o.Motivo })
-            Write-GvmLog -Nivel ERROR -Fase $Fase -Mensaje "$id: fuente no autorizada" -Detalle $o.Motivo
+            Write-GvmLog -Nivel ERROR -Fase $Fase -Mensaje "$($id): fuente no autorizada" -Detalle $o.Motivo
             continue
         }
     }

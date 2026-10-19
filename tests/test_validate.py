@@ -233,3 +233,89 @@ def test_faltan_directorios_obligatorios(tmp_path) -> None:
 
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q"]))
+
+
+# --- Reglas que nacieron de un fallo real de CI --------------------------------------
+# Cada una de estas copio en local el error que solo se veia en GitHub Actions.
+
+CABECERA_PS_OK = "\r\n".join("""
+<#
+  .SYNOPSIS
+    Script de prueba.
+#>
+[CmdletBinding(SupportsShouldProcess = $true)]
+param(
+    [ValidateSet('punto', 'rendimiento')][string]$Modo = 'punto',
+    [int[]]$Puertos = @(47984, 47989),
+    [string]$Ruta = 'C:/Windows'
+)
+Set-StrictMode -Version 1.0
+$ErrorActionPreference = 'Stop'
+$a = @'
+aqui-string con "comillas" y $id: sueltas que no interpolan
+'@
+# comentario con una 'apostrofo' suelto y $otro: texto
+Write-Host "$($a): ok $env:PATH ${Ruta}:"
+""".strip().splitlines())
+
+def escribir_script(copia: str, nombre: str, texto: str) -> None:
+    with open(os.path.join(copia, "scripts", "win", nombre), "w", encoding="utf-8-sig", newline="") as fh:
+        fh.write(texto)
+
+
+def test_el_codigo_valido_del_repo_no_levanta_la_alarma(tmp_path) -> None:
+    """Un script correcto (aqui-strings, comentarios, `$env:`) no debe generar ni un aviso.
+
+    Sin este test, un chequeo que marque todo daria verde en el job de parseo de CI y
+    rojo permanente local: el peor equilibrio posible.
+    """
+    copia = copiar_repo(str(tmp_path / "repo"))
+    escribir_script(copia, "Bueno.ps1", CABECERA_PS_OK)
+    p = ejecutar(copia, "--solo", "powershell")
+    assert "Bueno.ps1" not in p.stdout, f"falsa alarma:\n{p.stdout}"
+
+
+PS_BAD_EXTRA = [
+    ('referencia de ambito "$id:"', 'Write-Host "$id: no esta en el catalogo"\n', "referencia de ambito"),
+    ("aqui-string sin cerrar", '$x = @"\nvarias lineas de texto\n', "aqui-string"),
+    ("literal sin cerrar", "$c = 'roto\nWrite-Host 1\n", "sin cerrar"),
+]
+
+
+@pytest.mark.parametrize("descripcion,fragmento,esperado", PS_BAD_EXTRA)
+def test_detecta_errores_de_parseo_reales(tmp_path, descripcion: str, fragmento: str, esperado: str) -> None:
+    copia = copiar_repo(str(tmp_path / "repo"))
+    escribir_script(copia, "Malo.ps1", CABECERA_PS_OK + fragmento)
+    p = ejecutar(copia, "--solo", "powershell")
+    assert "Malo.ps1" in p.stdout and esperado in p.stdout, (
+        f"no se detecto '{descripcion}':\n{p.stdout}"
+    )
+
+
+def test_detecta_lista_en_param_sin_parentesis(tmp_path) -> None:
+    """Fallo real: el job de parseo moria con "Missing ')' in function parameter list"."""
+    copia = copiar_repo(str(tmp_path / "repo"))
+    texto = CABECERA_PS_OK.replace(
+        "[int[]]$Puertos = @(47984, 47989),", "[int[]]$Puertos = 47984, 47989,"
+    )
+    escribir_script(copia, "Malo.ps1", texto)
+    p = ejecutar(copia, "--solo", "powershell")
+    assert "Malo.ps1" in p.stdout and "dentro de @(...)" in p.stdout, p.stdout
+
+
+def test_el_manifiesto_solo_usa_miembros_de_ps51(tmp_path) -> None:
+    """`Tags` es de PowerShell 7: en la 5.1 aborta `Import-Module` y el modulo no carga."""
+    copia = copiar_repo(str(tmp_path / "repo"))
+    psd1 = os.path.join(copia, "scripts", "win", "Modules", "GamingVM", "GamingVM.psd1")
+    texto = open(psd1, encoding="utf-8-sig").read()
+    assert "RootModule" in texto
+    con_tags = texto.replace("    RootModule", "    Tags              = 'x'\n    RootModule", 1)
+    with open(psd1, "w", encoding="utf-8-sig", newline="") as fh:
+        fh.write(con_tags)
+    p = ejecutar(copia, "--solo", "powershell")
+    assert "Tags" in p.stdout and "manifiesto" in p.stdout, f"manifiesto ilegitimo paso:\n{p.stdout}"
+
+
+def test_el_manifiesto_del_repo_es_valido() -> None:
+    p = ejecutar(RAIZ, "--solo", "powershell")
+    assert "GamingVM.psd1" not in p.stdout, p.stdout

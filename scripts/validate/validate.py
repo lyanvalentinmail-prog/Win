@@ -511,15 +511,35 @@ def limpiar_powershell(text: str) -> tuple[str, list[int]]:
     return "".join(out), posiciones
 
 
-def revisar_cierres(texto: str) -> tuple[bool, str]:
-    """True si el escaneo termina DENTRO de un literal o de un bloque <# ... #>.
+def escanear_ps(texto: str) -> tuple[list[tuple[int, int, int]], list[str]]:
+    """Recorre codigo PowerShell ignorando comentarios y literales de un solo origen.
 
-    El balanceo de llaves no ve este fallo: una comilla sin cerrar se 'come' el resto del
-    fichero y el parser de PowerShell aborta con un mensaje confuso.
+    Devuelve (dobles, problemas):
+      * `dobles` son las triples (inicio, fin, linea) del CONTENIDO de cada literal entre
+        comillas dobles que esta en codigo (no en un comentario);
+      * `problemas` describe literales o bloques <# ... #> sin cerrar, que son los fallos
+        que hacen abortar el parser de PowerShell con un mensaje opaco.
+
+    Un literal '...' no se interpola, asi que su contenido no puede romper nada: solo hay
+    que saltarlo. En un "...", en cambio, el backtick (`) escapa y aqui-strings permiten
+    saltos de linea; si el fichero se acaba dentro de uno, esta roto.
     """
-    i, n = 0, len(texto)
+    dobles: list[tuple[int, int, int]] = []
+    problemas: list[str] = []
+    i = 0
+    n = len(texto)
+    linea = 1
     while i < n:
         c = texto[i]
+        if c == "\n":
+            linea += 1
+            i += 1
+            continue
+        if c == "`":
+            # escape de PowerShell: se come el siguiente caracter (en codigo suelto no
+            # significa nada, pero nunca abre un literal)
+            i += 2
+            continue
         if c == "#" and not texto.startswith("<#", i):
             while i < n and texto[i] != "\n":
                 i += 1
@@ -527,31 +547,119 @@ def revisar_cierres(texto: str) -> tuple[bool, str]:
         if texto.startswith("<#", i):
             fin = texto.find("#>", i)
             if fin < 0:
-                return True, "comentario de bloque <# sin cerrar"
+                problemas.append("comentario de bloque <# sin cerrar")
+                return dobles, problemas
+            linea += texto.count("\n", i, fin)
             i = fin + 2
             continue
-        if c in "\"'":
-            q = c
-            aqui = i
-            i += 1
-            while i < n:
-                if texto[i] == "`" and q == '"' and i + 1 < n:
-                    i += 2
-                    continue
-                if texto[i] == q:
-                    if i + 1 < n and texto[i + 1] == q:
-                        i += 2
+        if texto.startswith("@'", i) or texto.startswith('@"', i):
+            q = texto[i + 1]
+            cierre = q + "@"
+            apertura = linea
+            fin = buscar_al_inicio_de_linea(texto, i + 2, cierre)
+            if fin < 0:
+                problemas.append(
+                    f"aqui-string {q}@ sin cerrar (abierto en la linea {linea})"
+                )
+                return dobles, problemas
+            if q == '"':
+                # el aqui-string doble SI interpola: su contenido se revisa igual que un "..."
+                dobles.append((i + 2, fin, apertura))
+            linea += texto.count("\n", i, fin)
+            i = fin + 2
+            continue
+        if c == "'":
+            fin = i + 1
+            while fin < n:
+                if texto[fin] == "'":
+                    if fin + 1 < n and texto[fin + 1] == "'":
+                        fin += 2
                         continue
-                    i += 1
                     break
-                if texto[i] == "\n" and q == "'":
-                    # una comilla simple no puede saltar de linea en PowerShell
-                    return True, f"literal de comilla simple sin cerrar (abierto en la linea {texto.count(chr(10), 0, aqui) + 1})"
-                i += 1
-            else:
-                return True, f"literal de comilla doble sin cerrar (abierto en la linea {texto.count(chr(10), 0, aqui) + 1})"
+                if texto[fin] == "\n":
+                    break
+                fin += 1
+            if fin >= n or texto[fin] != "'":
+                problemas.append(f"literal de comilla simple sin cerrar (abierto en la linea {linea})")
+                return dobles, problemas
+            linea += texto.count("\n", i, fin)
+            i = fin + 1
+            continue
+        if c == '"':
+            ini = i + 1
+            ini_linea = linea
+            j = ini
+            while j < n:
+                if texto[j] == "`":
+                    j += 2
+                    continue
+                if texto[j] == '"':
+                    break
+                if texto[j] == "\n":
+                    linea += 1
+                j += 1
+            if j >= n:
+                problemas.append(f"literal de comilla doble sin cerrar (abierto en la linea {ini_linea})")
+                return dobles, problemas
+            dobles.append((ini, j, ini_linea))
+            i = j + 1
             continue
         i += 1
+    return dobles, problemas
+
+
+def buscar_al_inicio_de_linea(texto: str, desde: int, cierre: str) -> int:
+    """Indice del primer `cierre` que empieza linea (los aqui-strings exigen que este solo)."""
+    for m in re.finditer(re.escape(cierre), texto[desde:]):
+        pos = desde + m.start()
+        if pos == 0 or texto[pos - 1] == "\n":
+            return pos
+    return -1
+
+
+def bloque_de_param(texto: str) -> tuple[str, int] | None:
+    """Contenido del bloque `param(...)` y la linea donde abre (None si no lo hay)."""
+    m = re.search(r"\bparam\s*\(", texto, re.I)
+    if not m:
+        return None
+    inicio = m.end() - 1
+    profundidad = 0
+    for i in range(inicio, len(texto)):
+        if texto[i] == "(":
+            profundidad += 1
+        elif texto[i] == ")":
+            profundidad -= 1
+            if profundidad == 0:
+                return texto[inicio + 1:i], texto.count("\n", 0, m.start()) + 1
+    return None
+
+
+def hallazgos_en_dinero(texto: str) -> list[tuple[int, str]]:
+    """`$nombre:` dentro de un literal entre comillas dobles, fuera de `${}` y `$()`.
+
+    PowerShell interpreta `$id:` como una referencia de ambito ('$env:PATH'), asi que un
+    simple "$id: texto" es un error de parseo, no de gustos. `$env:PATH` si es valido: por
+    eso solo marcamos la forma en la que el dos puntos no va seguido de nombre.
+    """
+    hallazgos: list[tuple[int, str]] = []
+    for ini, fin, linea in escanear_ps(texto)[0]:
+        contenido = texto[ini:fin]
+        for m in re.finditer(r"\$([A-Za-z_]\w*):(?!\w)", contenido):
+            if "$(" + m.group(1) in contenido[max(0, m.start() - 3):m.start()]:
+                continue
+            hallazgos.append((linea + contenido[: m.start()].count("\n"), "$" + m.group(1) + ":"))
+    return hallazgos
+
+
+def revisar_cierres(texto: str) -> tuple[bool, str]:
+    """True si el fichero termina dentro de un literal o de un bloque <# ... #>.
+
+    El balanceo de llaves no ve este fallo: una comilla sin cerrar se 'come' el resto del
+    fichero y el parser de PowerShell aborta con un mensaje confuso.
+    """
+    _, problemas = escanear_ps(texto)
+    if problemas:
+        return True, problemas[0]
     return False, ""
 
 
@@ -579,6 +687,23 @@ def check_powershell(res: Results) -> None:
         res.error(area, f"GamingVM.psd1 exporta funciones inexistentes: {', '.join(sorted(faltan))}")
     if sobran:
         res.warn(area, f"funciones en el .psm1 no listadas en FunctionsToExport: {', '.join(sorted(sobran))}")
+    # 'Tags' o 'ReleaseNotes' parecen inocentes, pero Windows PowerShell 5.1 no los conoce
+    # y Import-Module aborta con "manifest contains one or more members that are not valid":
+    # el modulo entero queda inservible en la VM. La lista es la que devuelve ese mensaje.
+    validos = {
+        "ModuleToProcess", "NestedModules", "GUID", "Author", "CompanyName", "Copyright",
+        "ModuleVersion", "Description", "PowerShellVersion", "PowerShellHostName",
+        "PowerShellHostVersion", "CLRVersion", "DotNetFrameworkVersion",
+        "ProcessorArchitecture", "RequiredModules", "TypesToProcess", "FormatsToProcess",
+        "ScriptsToProcess", "PrivateData", "RequiredAssemblies", "ModuleList", "FileList",
+        "FunctionsToExport", "VariablesToExport", "AliasesToExport", "CmdletsToExport",
+        "DscResourcesToExport", "CompatiblePSEditions", "HelpInfoURI", "RootModule",
+        "DefaultCommandPrefix",
+    }
+    for m in re.finditer(r"^\s{4}([A-Za-z][A-Za-z0-9]*)\s*=", psd1, re.M):
+        if m.group(1) not in validos:
+            res.error(area, f"GamingVM.psd1:{psd1[:m.start()].count(chr(10)) + 1}: '{m.group(1)}' no es un "
+                            "miembro valido del manifiesto para PowerShell 5.1 e Import-Module aborta")
 
     ficheros = sorted(walk("scripts", (".ps1",)))
     if not ficheros:
@@ -601,6 +726,18 @@ def check_powershell(res: Results) -> None:
             for ln, _ in hallazgos_en_codigo(texto, patron):
                 res.error(area, f"{rel}:{ln}: `{nombre}` es de PowerShell 7+; el bootstrap debe correr "
                                 "en la 5.1 que trae Windows Server por defecto")
+        # 2a) param() con arrays literales sin @(): "[int[]]$Puertos = 1, 2, 3" no es sintaxis
+        # valida en un bloque param y el parser aborta con "Missing ')' in parameter list".
+        bloque_param = bloque_de_param(texto)
+        if bloque_param:
+            cuerpo, linea_apertura = bloque_param
+            # Solo literales sueltos (numeros o cadenas): una coma que separa PARAMETROS va
+            # seguida de '[' o '$', y un @(...) correcto empieza por '@(' -- por eso no hay
+            # falsas alarmas, que serian peor que no comprobarlo.
+            cuerpo = re.sub(r"^\s*#.*$", "", cuerpo, flags=re.M)
+            for m in re.finditer(r"=\s*-?\d[\d.]*(?:\s*,\s*-?\d[\d.]*)+", cuerpo):
+                ln = linea_apertura + cuerpo[:m.start()].count("\n")
+                res.error(area, f"{rel}:{ln}: en param() la lista de valores va dentro de @(...)")
         # 2) cabecera: param + strict mode + manejo de errores
         if "param(" not in limpio:
             if "Initialize-GvmRuntime" not in texto:
@@ -631,6 +768,12 @@ def check_powershell(res: Results) -> None:
             res.error(area, f"{rel}:{ln}: desactiva la proteccion en tiempo real (prohibido por el proyecto)")
         for ln, _ in hallazgos_en_codigo(texto, r"(?i)(Stop-Service|Set-Service|Disable-Service)\s+.*WinDefend", solo_codigo=False):
             res.error(area, f"{rel}:{ln}: toca el servicio de Defender (prohibido)")
+        # "$id: texto" es literalmente un error de parseo: PowerShell interpreta "$var:"
+        # como una referencia de ambito ('$using:', '$env:PATH'). Hay que escribir "$($id): ...".
+        for ln, trozo in hallazgos_en_dinero(texto):
+            nombre = trozo[1:-1]
+            res.error(area, f"{rel}:{ln}: `{trozo}` dentro de un literal entre comillas se lee como "
+                            f"referencia de ambito; escribe `$(${nombre}):` en su lugar")
         # 6) aqui-strings sin terminador y strings con comillas tipograficas
         if "“" in texto or "”" in texto or "’" in texto:
             res.error(area, f"{rel}: contiene comillas tipograficas (rompen el parseo de PowerShell)")
