@@ -33,7 +33,11 @@ Set-StrictMode -Version 1.0   # 1.0: se leen propiedades opcionales de JSON
 # 'Continue' a proposito: son scripts de medicion/diagnostico y deben informar de todo,
 # no abortar en la primera comprobacion que falle (un puerto cerrado no es un error).
 $ErrorActionPreference = 'Continue'
-$resultado = [ordered]@{
+# Todo el documento va en [pscustomobject]: ConvertTo-Json no sabe que hacer con un
+# OrderedDictionary que esta DENTRO de una coleccion ($resultado.tcp) y lanza
+# 'Argument types do not match' en la linea del ConvertTo-Json, sin pila util.
+# [pscustomobject] conserva el orden de claves y ademas se indexa con punto.
+$resultado = [pscustomobject]@{
     destino  = $Hostname
     fecha    = (Get-Date).ToString('o')
     tcp      = @()
@@ -52,12 +56,12 @@ foreach ($p in $Puertos) {
         $ok = $tarea.Wait(5000)
         $ms = [math]::Round(((Get-Date) - $ini).TotalMilliseconds, 1)
         if ($ok -and $cliente.Connected) {
-            $resultado.tcp += [ordered]@{ puerto = $p; abierto = $true; handshakeMs = $ms }
+            $resultado.tcp += [pscustomobject]@{ puerto = $p; abierto = $true; handshakeMs = $ms }
         } else {
-            $resultado.tcp += [ordered]@{ puerto = $p; abierto = $false; error = 'timeout de 5 s en el handshake' }
+            $resultado.tcp += [pscustomobject]@{ puerto = $p; abierto = $false; error = 'timeout de 5 s en el handshake' }
         }
     } catch {
-        $resultado.tcp += [ordered]@{ puerto = $p; abierto = $false; error = $_.Exception.Message }
+        $resultado.tcp += [pscustomobject]@{ puerto = $p; abierto = $false; error = $_.Exception.Message }
     } finally { $cliente.Dispose() }
 }
 
@@ -74,7 +78,7 @@ try {
         $media = ($valores | Measure-Object -Average).Average
         $perdida = [math]::Round((($Sondas - $valores.Count) / $Sondas) * 100, 1)
         $jitter = if ($valores.Count -ge 4) { ($valores | ForEach-Object { [math]::Abs($_ - $media) } | Measure-Object -Average).Average } else { 0 }
-        $resultado.icmp = [ordered]@{
+        $resultado.icmp = [pscustomobject]@{
             sondas            = $Sondas
             respuestas        = $valores.Count
             perdidaPorciento  = $perdida
@@ -84,10 +88,10 @@ try {
             desviacionMediaMs = [math]::Round($jitter, 1)
         }
     } else {
-        $resultado.icmp = [ordered]@{ respuestas = $valores.Count; nota = 'ICMP filtrado o ausente: no concluyente, usa el handshake TCP como referencia' }
+        $resultado.icmp = [pscustomobject]@{ respuestas = $valores.Count; nota = 'ICMP filtrado o ausente: no concluyente, usa el handshake TCP como referencia' }
     }
 } catch {
-    $resultado.icmp = [ordered]@{ error = $_.Exception.Message }
+    $resultado.icmp = [pscustomobject]@{ error = $_.Exception.Message }
 }
 
 # MTU de ruta: 1472 = 1500 - cabeceras. Bajos = PPPoE/tunel; la fragmentacion duele al UDP.
@@ -95,9 +99,9 @@ try {
     $bytes = New-Object byte[] 1464
     $ping2 = New-Object Net.NetworkInformation.Ping
     $r = $ping2.Send($Hostname, 1500, $bytes)
-    $resultado.mtu = [ordered]@{ payloadOk = 1464; estado = $r.Status.ToString() }
+    $resultado.mtu = [pscustomobject]@{ payloadOk = 1464; estado = $r.Status.ToString() }
 } catch {
-    $resultado.mtu = [ordered]@{ nota = 'no se pudo probar el tamano de paquete: ' + $_.Exception.Message }
+    $resultado.mtu = [pscustomobject]@{ nota = 'no se pudo probar el tamano de paquete: ' + $_.Exception.Message }
 }
 
 # TLS del endpoint de gestion (443) o del port RDP si el servidor presenta STARTTLS.
@@ -106,16 +110,16 @@ try {
     $ssl = New-Object Net.Security.SslStream($tcp.GetStream(), $false, { param($s, $cert, $chain, $errors) $true })
     $ssl.AuthenticateAsClient($Hostname)
     $cert = New-Object Security.Cryptography.X509Certificates.X509Certificate2($ssl.RemoteCertificate)
-    $resultado.tls = [ordered]@{
+    $resultado.tls = [pscustomobject]@{
         sujeto        = $cert.Subject
         emisor        = $cert.Issuer
         caducidad     = $cert.NotAfter.ToString('yyyy-MM-dd')
-        autosellicdo  = $cert.Issuer -eq $cert.Subject
+        autosellado   = $cert.Issuer -eq $cert.Subject
         nota          = 'autofirmado es normal en el certificado RDP; con IP dinamica, usa el nombre del tunel o un certificado interno'
     }
     $ssl.Dispose(); $tcp.Dispose()
 } catch {
-    $resultado.tls = [ordered]@{ nota = 'sin TLS en 443 (normal si solo expones 3389): ' + $_.Exception.Message }
+    $resultado.tls = [pscustomobject]@{ nota = 'sin TLS en 443 (normal si solo expones 3389): ' + $_.Exception.Message }
 }
 
 if ($TunelHost -and $TunelPuerto) {
@@ -123,8 +127,8 @@ if ($TunelHost -and $TunelPuerto) {
     $c = New-Object Net.Sockets.TcpClient
     try {
         $t = $c.ConnectAsync($TunelHost, $TunelPuerto); $ok = $t.Wait(3000)
-        $resultado.tunel = [ordered]@{ host = $TunelHost; puerto = $TunelPuerto; activo = [bool]$ok; ms = [math]::Round(((Get-Date) - $ini).TotalMilliseconds, 1) }
-    } catch { $resultado.tunel = [ordered]@{ host = $TunelHost; puerto = $TunelPuerto; error = $_.Exception.Message } } finally { $c.Dispose() }
+        $resultado.tunel = [pscustomobject]@{ host = $TunelHost; puerto = $TunelPuerto; activo = [bool]$ok; ms = [math]::Round(((Get-Date) - $ini).TotalMilliseconds, 1) }
+    } catch { $resultado.tunel = [pscustomobject]@{ host = $TunelHost; puerto = $TunelPuerto; error = $_.Exception.Message } } finally { $c.Dispose() }
 }
 
 # Interpretacion
@@ -147,7 +151,7 @@ if (-not $FormatoJson) {
     }
     if ($resultado.mtu) { Write-Host ("  [INFO] MTU de ruta: " + ($resultado.mtu | ConvertTo-Json -Compress)) }
     if ($resultado.tls -and $resultado.tls.sujeto) {
-        Write-Host ("  [INFO] TLS: {0} · caduca {1} · autosellado={2}" -f $resultado.tls.sujeto, $resultado.tls.caducidad, $resultado.tls.autosellicdo)
+        Write-Host ("  [INFO] TLS: {0} · caduca {1} · autosellado={2}" -f $resultado.tls.sujeto, $resultado.tls.caducidad, $resultado.tls.autosellado)
     }
     if ($resultado.tunel) { Write-Host ("  [INFO] tunel: " + ($resultado.tunel | ConvertTo-Json -Compress)) }
     Write-Host ''

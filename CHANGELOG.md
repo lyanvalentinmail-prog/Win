@@ -94,6 +94,27 @@ primer push) y confirmado contra la documentacion de cada proveedor:
   aqui-strings, `$var:` dentro de comillas, listas en `param()`, miembros del manifiesto) y el
   diff de `fmt`/los diagnosticos de `validate` convertidos en anotaciones del check.
 
+- **Fases de Windows ejecutadas de verdad en el runner** (el humo ahora corre el bootstrap con
+  `-Simulacion` y devuelve el log como anotaciones; sin eso los fallos eran mudos):
+  - `Install-GvmWingetApp` exigía `[ValidateSet('machine','user')]` en `-Scope`, y
+    `Install-Apps.ps1` pasa `installacion.scope` del catálogo: las 29 apps que no lo declaran
+    llegaban con `''` y el binding abortaba la fase `apps` entera. Vacío = que decida winget.
+  - `New-GvmInforme` tipaba `[pscustomobject[]]$Hallazgos`: convertir la colección del script a
+    ese tipo lanzaba `Argument types do not match` y dejaba la VM sin informe. Se normaliza
+    dentro del cmdlet.
+  - `New-GvmHallazgo` tenía `-Detalle` obligatorio: un hallazgo sin detalle (p. ej. el de
+    Direct3D cuando `dxdiag` no informa) abortaba el script por binding.
+  - **`ConvertTo-Json` con un `[ordered]` dentro de una colección**: PowerShell recorre el
+    enumerable esperando `KeyValuePair<string,object>` y un `OrderedDictionary` entrega
+    `DictionaryEntry` → `ArgumentException: Argument types do not match` sin marco de script.
+    Afectaba a `remapshortcuts.json`/`remapkeys.json` (PowerToys), a `apps.json` (Sunshine) y a
+    la salida de `Test-ConexionRemota.ps1`. Añadidos `ConvertTo-GvmLlano` y
+    `ConvertTo-GvmJson` en el módulo: normalizan a `[pscustomobject]` (conserva el orden de
+    claves) antes de serializar, y los tres sitios pasan por ahí.
+  - `Invoke-GvmFase` solo registraba el mensaje de la excepción; ahora guarda
+    `ScriptName:linea` y las seis primeras líneas de la pila, que es como se localizaron estos
+    cuatro fallos.
+
 ### Conocido
 
 - Los números de versión y hashes del catálogo son un **snapshot de 2026-10-18**: caducan.

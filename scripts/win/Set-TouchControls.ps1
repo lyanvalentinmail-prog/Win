@@ -157,14 +157,16 @@ foreach ($t in @($primero.controles.teclas)) {
         $pendientes.Add("el origen '$($t.original)' es un boton de mando: usar Steam Input o AntiMicroX (ver gaming/steam/README.md)")
         continue
     }
-    $keys.Add([ordered]@{ originalKey = $origen; newKey = $destino })
+    $keys.Add([pscustomobject]@{ originalKey = $origen; newKey = $destino })
 }
 foreach ($a in @($primero.controles.atajos)) {
     if ($a.via -ne 'powertoys-keyboard-manager') { continue }
     $partes = @($a.teclas -split '\+')
     $orig = @(); foreach ($p in $partes) { $c = Get-VkCode $p; if ($null -ne $c) { $orig += $c } else { $pendientes.Add("atajo '$($a.nombre)': tecla '$p' no reconocida") } }
     if ($orig.Count -lt 2) { $pendientes.Add("atajo '$($a.nombre)' ignorado: se necesitan al menos 2 teclas para un acceso directo"); continue }
-    $shortcuts.Add([ordered]@{ originalKeys = $orig; targetApp = $targetApp; newRemapKeys = @(112) })   # F2 por defecto: abrir menu de captura
+    # pscustomobject, no [ordered]: dentro de una coleccion ConvertTo-Json no sabe que hacer
+    # con un OrderedDictionary y el fichero de PowerToys no se escribe (ver ConvertTo-GvmLlano).
+    $shortcuts.Add([pscustomobject]@{ originalKeys = $orig; targetApp = $targetApp; newRemapKeys = @(112) })   # F2: abrir menu de captura
 }
 
 if ($keys.Count -gt 0 -or $shortcuts.Count -gt 0) {
@@ -172,8 +174,8 @@ if ($keys.Count -gt 0 -or $shortcuts.Count -gt 0) {
     if (-not (Test-Path -LiteralPath $staging)) { New-Item -ItemType Directory -Path $staging -Force | Out-Null }
     $archivoKeys = Join-Path $staging 'remapkeys.json'
     $archivoShort = Join-Path $staging 'remapshortcuts.json'
-    @{ version = '1.0.0'; remapKeys = @{ inOrder = $keys } } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $archivoKeys -Encoding UTF8
-    @{ version = '1.0.0'; remapShortcuts = @{ global = @(); appSpecific = @($shortcuts) } } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $archivoShort -Encoding UTF8
+    ConvertTo-GvmJson -InputObject @{ version = '1.0.0'; remapKeys = @{ inOrder = $keys } } -Depth 6 | Set-Content -LiteralPath $archivoKeys -Encoding UTF8
+    ConvertTo-GvmJson -InputObject @{ version = '1.0.0'; remapShortcuts = @{ global = @(); appSpecific = @($shortcuts) } } -Depth 6 | Set-Content -LiteralPath $archivoShort -Encoding UTF8
     $remapeosGenerados = $keys.Count + $shortcuts.Count
     Write-GvmLog -Nivel OK -Fase $Fase -Mensaje "remapeos generados en $staging ($remapeosGenerados entradas)" -Detalle 'PowerToys lee estos ficheros al arrancar; el esquema es el observado en la version actual'
     if ($AplicarEnPowerToys -and $powertoys) {

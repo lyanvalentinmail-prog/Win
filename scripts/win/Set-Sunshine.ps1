@@ -151,15 +151,17 @@ if ($EscribirAppsJson) {
         )) {
         $ruta = [Environment]::ExpandEnvironmentVariables($libreria.exe)
         if (Test-Path -LiteralPath $ruta) {
-            $juegos += [ordered]@{
-                'type' = 'app'; 'name' = $libreria.nombre; 'cmd' = "`"$ruta`""
-                'params' = $libreria.args; 'workingDir' = (Split-Path $ruta -Parent)
-                'excludeGlobalVars' = ''
+            # [pscustomobject] y no [ordered]: $juegos es una coleccion, y un OrderedDictionary
+            # dentro de ella hace que ConvertTo-Json reviente antes de escribir apps.json.
+            $juegos += [pscustomobject]@{
+                type = 'app'; name = $libreria.nombre; cmd = "`"$ruta`""
+                params = $libreria.args; workingDir = (Split-Path $ruta -Parent)
+                excludeGlobalVars = ''
             }
         }
     }
     if ($juegos.Count -gt 0) {
-        [ordered]@{ env = [ordered]@{}; apps = $juegos } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $appsRuta -Encoding UTF8
+        ConvertTo-GvmJson -InputObject @{ env = @{}; apps = $juegos } -Depth 6 | Set-Content -LiteralPath $appsRuta -Encoding UTF8
         $detalle += " · apps.json con $($juegos.Count) accesos (formato observado en Sunshine 2026.x; si tu version cambia el esquema, usa la web)"
     } else {
         $detalle += ' · apps.json omitido: ningun lanzador instalado todavia'
