@@ -38,7 +38,7 @@ resource "azurerm_resource_group" "win" {
 resource "azurerm_public_ip" "win" {
   name                = "pip-${var.name}"
   location            = azurerm_resource_group.win.location
-  resource_group_name   = azurerm_resource_group.win.name
+  resource_group_name = azurerm_resource_group.win.name
   allocation_method   = "Static"
   sku                 = "Standard"
   domain_name_label   = var.dns_prefix

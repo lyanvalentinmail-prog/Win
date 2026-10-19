@@ -33,26 +33,51 @@ jobs:
           Copy-Item config/vm.example.json (Join-Path $dir 'vm.json') -Force
           foreach ($f in Get-ChildItem config -Filter *.json) { Copy-Item $f.FullName $dir -Force }
 
-      - name: El modulo importa, exporta y su ayuda carga
+      - name: El modulo importa e informa sus funciones
         shell: pwsh
         run: |
-          Import-Module ./scripts/win/Modules/GamingVM/GamingVM.psd1 -Force
+          try {
+            Import-Module ./scripts/win/Modules/GamingVM/GamingVM.psd1 -Force -ErrorAction Stop
+          } catch {
+            Write-Host "::error file=scripts/win/Modules/GamingVM/GamingVM.psd1::importacion del modulo fallo: $($_.Exception.Message)"
+            throw
+          }
           $exportadas = Get-Command -Module GamingVM
-          if ($exportadas.Count -lt 15) { throw "el modulo expone solo $($exportadas.Count) funciones" }
+          if ($exportadas.Count -lt 15) {
+            Write-Host "::error el modulo expone solo $($exportadas.Count) funciones (FunctionsToExport del manifiesto)"
+            throw "el modulo expone solo $($exportadas.Count) funciones"
+          }
+          Write-Host "funciones exportadas: $($exportadas.Count)"
+
+      - name: La ayuda comment-based esta en todos los scripts
+        shell: pwsh
+        run: |
+          $sinAyuda = @()
+          foreach ($s in Get-ChildItem scripts/win -Filter *.ps1) {
+            $ayuda = Get-Help $s.FullName -ErrorAction SilentlyContinue
+            if (-not $ayuda -or -not $ayuda.Synopsis -or -not $ayuda.Synopsis.Trim()) {
+              $sinAyuda += $s.Name
+              Write-Host "::error file=scripts/win/$($s.Name)::sin Get-Help (bloque <# .SYNOPSIS #>)"
+            }
+          }
+          if ($sinAyuda.Count) { throw "sin ayuda: $($sinAyuda -join ', ')" }
           foreach ($s in Get-ChildItem scripts/win -Filter *.ps1) {
             $ayuda = Get-Help $s.FullName -ErrorAction SilentlyContinue
             if (-not $ayuda.Synopsis -or -not $ayuda.Synopsis.Trim()) { throw "$($s.Name) no tiene ayuda" }
           }
-          Write-Host "funciones exportadas: $($exportadas.Count)"
-
       - name: Scripts que modifican el sistema soportan -WhatIf
         shell: pwsh
         run: |
-          $soloLectura = 'Test-GamingReadiness.ps1','Get-SystemMetrics.ps1','Unlock-ConsoleSession.ps1'
+          $soloLectura = 'Test-GamingReadiness.ps1', 'Get-SystemMetrics.ps1', 'Unlock-ConsoleSession.ps1'
+          $sinWhatIf = @()
           foreach ($s in Get-ChildItem scripts/win -Filter *.ps1) {
             if ($soloLectura -contains $s.Name) { continue }
-            if (-not (Get-Command $s.FullName).SupportsShouldProcess) { throw "$($s.Name) no soporta -WhatIf" }
+            if (-not (Get-Command $s.FullName).SupportsShouldProcess) {
+              $sinWhatIf += $s.Name
+              Write-Host "::error file=scripts/win/$($s.Name)::le falta SupportsShouldProcess"
+            }
           }
+          if ($sinWhatIf.Count) { throw "sin -WhatIf: $($sinWhatIf -join ', ')" }
 
       - name: Preflight y simulacion (sin permisos de admin, sin cambios)
         shell: pwsh

@@ -40,8 +40,8 @@ variable "key_name" {
 }
 
 variable "rdp_port" {
-  type        = number
-  default     = 3389
+  type    = number
+  default = 3389
 }
 
 variable "rdp_allowed_cidrs" {
@@ -57,8 +57,8 @@ variable "associate_public_ip" {
 }
 
 variable "os_disk_gb" {
-  type        = number
-  default     = 128
+  type    = number
+  default = 128
 }
 
 variable "data_disk_gb" {
@@ -68,8 +68,8 @@ variable "data_disk_gb" {
 }
 
 variable "root_volume_type" {
-  type        = string
-  default     = "gp3"
+  type    = string
+  default = "gp3"
   validation {
     condition     = contains(["gp3", "gp2", "io2"], var.root_volume_type)
     error_message = "gp3 (recomendado), gp2 o io2. magnetic/standard no: el arranque y las cargas serian inusables."
@@ -77,8 +77,8 @@ variable "root_volume_type" {
 }
 
 variable "data_volume_type" {
-  type        = string
-  default     = "gp3"
+  type    = string
+  default = "gp3"
 }
 
 variable "ebs_optimized" {
@@ -94,6 +94,6 @@ variable "enable_game_stream" {
 }
 
 variable "tags" {
-  type        = map(string)
-  default     = {}
+  type    = map(string)
+  default = {}
 }

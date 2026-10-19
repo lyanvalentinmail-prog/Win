@@ -65,11 +65,11 @@ resource "aws_vpc_security_group_egress_rule" "all" {
 }
 
 resource "aws_instance" "win" {
-  ami                    = data.aws_ami.windows.id
-  instance_type          = var.instance_type
-  subnet_id                = var.subnet_id
-  vpc_security_group_ids   = [aws_security_group.win.id]
-  key_name                 = var.key_name
+  ami                         = data.aws_ami.windows.id
+  instance_type               = var.instance_type
+  subnet_id                   = var.subnet_id
+  vpc_security_group_ids      = [aws_security_group.win.id]
+  key_name                    = var.key_name
   associate_public_ip_address = var.associate_public_ip
   # user_data se limita a ARRANCAR el bootstrap; la configuracion va en el disco,
   # no en user_data (64 KB y visible en la consola "DescribeInstanceUserData").

@@ -7,6 +7,18 @@ output "gpu_asignada" {
   value       = length(var.gpu_hostdev_ids)
 }
 
+output "montar_medios_de_instalacion" {
+  description = "Los cdroms no son un recurso de este modulo: se montan con virsh (y se desmontan al terminar la instalacion)."
+  value = var.instalar_desde_iso ? [
+    "virsh attach-disk ${libvirt_domain.win.name} ${var.windows_iso_path} hdc --type cdrom --mode readonly",
+    "virsh attach-disk ${libvirt_domain.win.name} ${var.virtio_iso_path} hdd --type cdrom --mode readonly",
+    "virt-viewer -c ${var.libvirt_uri} ${libvirt_domain.win.name}",
+    "cuando acabe: virsh detach-disk ${libvirt_domain.win.name} hdc && virsh detach-disk ${libvirt_domain.win.name} hdd",
+  ] : [
+    "la VM ya arranca del disco: no hay cdroms que montar (var.instalar_desde_iso = false)",
+  ]
+}
+
 output "comandos_utiles" {
   value = [
     "virsh domifaddr ${libvirt_domain.win.name}          # IP de la VM",

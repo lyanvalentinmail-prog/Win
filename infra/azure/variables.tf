@@ -89,13 +89,13 @@ variable "data_disk_sku" {
 }
 
 variable "vnet_cidr" {
-  type        = string
-  default     = "10.20.0.0/16"
+  type    = string
+  default = "10.20.0.0/16"
 }
 
 variable "subnet_cidr" {
-  type        = string
-  default     = "10.20.1.0/24"
+  type    = string
+  default = "10.20.1.0/24"
 }
 
 variable "rdp_port" {
@@ -156,4 +156,16 @@ variable "tags" {
   type        = map(string)
   default     = {}
   description = "Etiquetas (cost center, entorno, ...). Util para entender la factura de esta VM."
+}
+
+variable "dns_prefix" {
+  type        = string
+  default     = null
+  description = "Etiqueta DNS publica (se convierte en <prefix>.<region>.cloudapp.azure.com). Con viñeta DNS puedes fijar un nombre para el certificado y el cliente."
+}
+
+variable "skip_provider_registration" {
+  type        = bool
+  default     = false
+  description = "true solo si la suscripcion ya tiene los providers registrados y el plan tardaria demasiado en registrarlos."
 }

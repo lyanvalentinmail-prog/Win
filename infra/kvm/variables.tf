@@ -40,8 +40,8 @@ variable "ram_mb" {
 }
 
 variable "os_disk_gb" {
-  type        = number
-  default     = 128
+  type    = number
+  default = 128
 }
 
 variable "data_disk_gb" {

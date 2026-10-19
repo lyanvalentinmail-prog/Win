@@ -34,9 +34,9 @@ provider "libvirt" {
 }
 
 resource "libvirt_volume" "disco_os" {
-  name    = "${var.name}-os.qcow2"
-  pool    = var.storage_pool
-  size    = var.os_disk_gb * 1073741824
+  name = "${var.name}-os.qcow2"
+  pool = var.storage_pool
+  size = var.os_disk_gb * 1073741824
   # Sin imagen base el volumen queda vacio y Windows se instala desde la ISO.
 }
 
@@ -100,7 +100,7 @@ resource "libvirt_domain" "win" {
     network_name = var.network_name
     bridge       = var.network_bridge
     mac          = var.mac_address
-}
+  }
 
   # VirtIO: disco y red para rendimiento (los drivers van en la ISO de virtio-win).
   disk {
@@ -120,26 +120,13 @@ resource "libvirt_domain" "win" {
     }
   }
 
-  dynamic "disk" {
-    for_each = var.instalar_desde_iso ? [1] : []
-    content {
-      file     = var.windows_iso_path
-      cdrom    = true
-      readonly = true
-    }
-  }
+  # Medios de instalacion: se montan APARTES del ciclo de Terraform, porque cambiar de
+  # "instalar desde ISO" a "arrancar del disco" es un paso manual en cualquier via KVM:
+  #   virsh attach-disk <dominio> /ruta/Windows.iso hdc --type cdrom --mode readonly
+  #   virsh attach-disk <dominio> /ruta/virtio-win.iso hdd --type cdrom --mode readonly
+  # y al terminar:  virsh detach-disk <dominio> hdc && virsh update-boot-order ...
+  # (var.instalar_desde_iso sigue existiendo como documentacion del estado, no como recurso).
 
-  dynamic "disk" {
-    for_each = var.instalar_desde_iso ? [1] : []
-    content {
-      file     = var.virtio_iso_path
-      cdrom    = true
-      readonly = true
-    }
-  }
-
-  # Passthrough real: cada id es un BDF (0000:01:00.0) ya preparado en el host con
-  # nvidia/vfio-bind. Vaciar esta lista = VM sin GPU (y el proyecto lo reporta asi).
   dynamic "hostdev" {
     for_each = var.gpu_hostdev_ids
     content {

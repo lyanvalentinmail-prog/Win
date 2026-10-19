@@ -8,21 +8,34 @@
 locals {
   edition_conf = {
     windows-server-2025-desktop = {
-      publisher = "MicrosoftWindowsServer", offer = "WindowsServer", sku = "2025-datacenter-azure-edition"
+      publisher = "MicrosoftWindowsServer"
+      offer     = "WindowsServer"
+      sku       = "2025-datacenter-azure-edition"
     }
     windows-server-2022-desktop = {
-      publisher = "MicrosoftWindowsServer", offer = "WindowsServer", sku = "2022-datacenter-azure-edition"
+      publisher = "MicrosoftWindowsServer"
+      offer     = "WindowsServer"
+      sku       = "2022-datacenter-azure-edition"
     }
     windows-11-pro = {
-      publisher = "MicrosoftWindowsDesktop", offer = "windows-11", sku = "win11-25h2-pro"
+      publisher = "MicrosoftWindowsDesktop"
+      offer     = "windows-11"
+      sku       = "win11-25h2-pro"
     }
     windows-11-enterprise = {
-      publisher = "MicrosoftWindowsDesktop", offer = "windows-11", sku = "win11-25h2-ent"
+      publisher = "MicrosoftWindowsDesktop"
+      offer     = "windows-11"
+      sku       = "win11-25h2-ent"
     }
   }
-  img      = lookup(local.edition_conf, var.windows_edition, local.edition_conf["windows-server-2025-desktop"])
-  gpu_sku  = startswith(var.vm_size, "Standard_NV")
-  limites  = { Standard_NV6ads_A10_v5 = 6, Standard_NV12ads_A10_v5 = 12, Standard_NV18ads_A10_v5 = 18, Standard_NV36ads_A10_v5 = 36 }
+  img     = lookup(local.edition_conf, var.windows_edition, local.edition_conf["windows-server-2025-desktop"])
+  gpu_sku = startswith(var.vm_size, "Standard_NV")
+  limites = {
+    Standard_NV6ads_A10_v5  = 6
+    Standard_NV12ads_A10_v5 = 12
+    Standard_NV18ads_A10_v5 = 18
+    Standard_NV36ads_A10_v5 = 36
+  }
 }
 
 resource "azurerm_network_interface" "win" {
@@ -41,22 +54,22 @@ resource "azurerm_network_interface" "win" {
 }
 
 resource "azurerm_windows_virtual_machine" "win" {
-  name                       = var.name
-  location                   = azurerm_resource_group.win.location
-  resource_group_name        = azurerm_resource_group.win.name
-  network_interface_ids      = [azurerm_network_interface.win.id]
-  size                       = var.vm_size
-  admin_username             = var.vm_admin_user
-  admin_password             = var.vm_admin_password
-  computer_name              = var.name
-  timezone                   = var.timezone
-  provision_vm_agent         = true
-  enable_automatic_updates   = var.automatic_updates
-  priority                   = var.spot_priority ? "Spot" : "Regular"
-  eviction_policy            = var.spot_priority ? "Deallocate" : null
-  patch_mode                 = var.automatic_updates ? "AutomaticByPlatform" : "Manual"
-  security_type              = "TrustedLaunch"
-  vtpm_enabled               = true
+  name                     = var.name
+  location                 = azurerm_resource_group.win.location
+  resource_group_name      = azurerm_resource_group.win.name
+  network_interface_ids    = [azurerm_network_interface.win.id]
+  size                     = var.vm_size
+  admin_username           = var.vm_admin_user
+  admin_password           = var.vm_admin_password
+  computer_name            = var.name
+  timezone                 = var.timezone
+  provision_vm_agent       = true
+  enable_automatic_updates = var.automatic_updates
+  priority                 = var.spot_priority ? "Spot" : "Regular"
+  eviction_policy          = var.spot_priority ? "Deallocate" : null
+  patch_mode               = var.automatic_updates ? "AutomaticByPlatform" : "Manual"
+  security_type            = "TrustedLaunch"
+  vtpm_enabled             = true
 
   source_image_reference {
     publisher = local.img.publisher
@@ -115,10 +128,10 @@ resource "azurerm_managed_disk" "datos" {
 resource "azurerm_virtual_machine_data_disk_attachment" "datos" {
   count = var.data_disk_gb > 0 ? 1 : 0
 
-  managed_disk_ref    = azurerm_managed_disk.datos[0].id
-  virtual_machine_id  = azurerm_windows_virtual_machine.win.id
-  lun                 = 0
-  caching             = "None"
+  managed_disk_ref   = azurerm_managed_disk.datos[0].id
+  virtual_machine_id = azurerm_windows_virtual_machine.win.id
+  lun                = 0
+  caching            = "None"
 }
 
 # Spot (var.spot_priority): barato y ADECUADO SOLO PARA PRUEBAS — Azure puede

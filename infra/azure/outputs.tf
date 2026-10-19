@@ -28,7 +28,7 @@ output "gpu_esperada" {
 
 output "comando_bootstrap" {
   description = "Comando exacto para preparar la VM desde tu estacion (requiere la az CLI autenticada)."
-  value = join(" ", [
+  value       = join(" ", [
     "az vm run-command invoke",
     "-g ${azurerm_resource_group.win.name}",
     "-n ${azurerm_windows_virtual_machine.win.name}",

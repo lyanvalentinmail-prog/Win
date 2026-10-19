@@ -511,6 +511,50 @@ def limpiar_powershell(text: str) -> tuple[str, list[int]]:
     return "".join(out), posiciones
 
 
+def revisar_cierres(texto: str) -> tuple[bool, str]:
+    """True si el escaneo termina DENTRO de un literal o de un bloque <# ... #>.
+
+    El balanceo de llaves no ve este fallo: una comilla sin cerrar se 'come' el resto del
+    fichero y el parser de PowerShell aborta con un mensaje confuso.
+    """
+    i, n = 0, len(texto)
+    while i < n:
+        c = texto[i]
+        if c == "#" and not texto.startswith("<#", i):
+            while i < n and texto[i] != "\n":
+                i += 1
+            continue
+        if texto.startswith("<#", i):
+            fin = texto.find("#>", i)
+            if fin < 0:
+                return True, "comentario de bloque <# sin cerrar"
+            i = fin + 2
+            continue
+        if c in "\"'":
+            q = c
+            aqui = i
+            i += 1
+            while i < n:
+                if texto[i] == "`" and q == '"' and i + 1 < n:
+                    i += 2
+                    continue
+                if texto[i] == q:
+                    if i + 1 < n and texto[i + 1] == q:
+                        i += 2
+                        continue
+                    i += 1
+                    break
+                if texto[i] == "\n" and q == "'":
+                    # una comilla simple no puede saltar de linea en PowerShell
+                    return True, f"literal de comilla simple sin cerrar (abierto en la linea {texto.count(chr(10), 0, aqui) + 1})"
+                i += 1
+            else:
+                return True, f"literal de comilla doble sin cerrar (abierto en la linea {texto.count(chr(10), 0, aqui) + 1})"
+            continue
+        i += 1
+    return False, ""
+
+
 def linea_real(texto: str, posiciones: list[int], idx: int) -> int:
     """Numero de linea (1-based) en el fichero original del caracter idx del texto limpio."""
     if idx < len(posiciones):
@@ -541,6 +585,9 @@ def check_powershell(res: Results) -> None:
         res.error(area, "no hay scripts .ps1 en scripts/")
     for rel in ficheros:
         texto = read(rel)
+        roto, motivo = revisar_cierres(texto)
+        if roto:
+            res.error(area, f"{rel}: {motivo}")
         limpio, posiciones = limpiar_powershell(texto)
         balancear(texto, limpio, posiciones, rel, res, area)
         # 1) operadores de PowerShell 7 que rompen en Windows PowerShell 5.1
