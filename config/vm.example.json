@@ -1,0 +1,140 @@
+{
+  "$schema": "./vm.schema.json",
+  "schemaVersion": "1.0",
+
+  "name": "wingamingvm01",
+  "provider": "azure",
+  "region": "westeurope",
+  "resourceGroup": "rg-wingamingvm01",
+  "tags": {
+    "proyecto": "win-gaming-vm",
+    "uso": "gaming-remoto",
+    "proprietario": "cambia-este-tag"
+  },
+
+  "vm": {
+    "size": "Standard_NV6ads_A10_v5",
+    "vcpus": 6,
+    "ramGiB": 55,
+    "osDiskGiB": 256,
+    "osDiskSku": "PremiumSSD",
+    "dataDiskGiB": 512,
+    "dataDiskSku": "PremiumSSDv2",
+    "useEphemeralOsDisk": false,
+    "spot": false,
+    "bootDiagnostics": true,
+    "hyperVGeneration": 2,
+    "encryptedHostCache": false
+  },
+
+  "gpu": {
+    "mode": "paravirtual",
+    "driver": "nvidia-grid",
+    "installDriverFrom": "azure-extension",
+    "hardwareEncoderRequired": true
+  },
+
+  "windows": {
+    "edition": "windows-server-2025-desktop",
+    "username": "gamer",
+    "language": "es-ES",
+    "timezone": "Romance Standard Time",
+    "disableAutoUpdates": false,
+    "autoLogon": false,
+    "theme": "dark",
+    "scaling": 125,
+    "wallpaper": {
+      "source": "default",
+      "style": "fill"
+    }
+  },
+
+  "remote": {
+    "type": "rdp-windows-app",
+    "port": 3389,
+    "allowedCidrs": [],
+    "requireNla": true,
+    "tunnel": "tailscale",
+    "session": {
+      "quality": "balanced",
+      "colorDepth": 32,
+      "avc444": true,
+      "hardwareEncoding": true,
+      "udp": true,
+      "maxMonitors": 2,
+      "audio": "play",
+      "clipboard": true,
+      "driveRedirection": false,
+      "printerRedirection": false,
+      "smartSizing": true,
+      "idleDisconnectMinutes": 0,
+      "reconnectRetries": 5
+    },
+    "resolution": {
+      "mode": "client"
+    }
+  },
+
+  "gaming": {
+    "enabled": true,
+    "channel": "both",
+    "performancePreset": "equilibrado",
+    "sunshine": {
+      "enabled": true,
+      "httpsPort": 47990,
+      "fps": 60,
+      "codec": "auto",
+      "bitrateMbps": 25,
+      "encoder": "auto",
+      "audio": true,
+      "allowedCidrs": [],
+      "keepConsoleSession": true
+    },
+    "touchControls": {
+      "enabled": true,
+      "profiles": ["minecraft-java", "stardew-valley", "hades"]
+    },
+    "monitoring": {
+      "enabled": true,
+      "intervalSeconds": 5,
+      "retentionDays": 7,
+      "latencyTargetMs": 40
+    }
+  },
+
+  "apps": {
+    "selections": ["utilities", "gaming"],
+    "custom": [
+      { "wingetId": "ShareX.ShareX", "reason": "Captura de pantalla y grabacion para clips" }
+    ],
+    "skipUnsupported": true,
+    "blockNonOfficialSources": true,
+    "maxRetries": 2
+  },
+
+  "security": {
+    "defender": "enable",
+    "autoUpdates": "install",
+    "screenLockMinutes": 0,
+    "bitlockerDataDisk": false,
+    "auditLogging": true,
+    "disableUnusedServices": ["WMPNetworkSvc", "PrintNotify", "lfsvc", "dmwappushservice"],
+    "restrictRdpToAdministrators": true
+  },
+
+  "power": {
+    "plan": "ultimate-performance",
+    "disableSleep": true,
+    "disableHibernate": true,
+    "hardwareAcceleratedGpuScheduling": true,
+    "disableGameDvr": false,
+    "processCleanup": { "enabled": false, "processes": [] }
+  },
+
+  "cost": {
+    "acknowledgePaidResources": true,
+    "budgetUsdPerMonth": 90,
+    "autoStop": { "enabled": true, "idleMinutes": 30, "action": "deallocate" },
+    "notes": "Una NV6ads_A10_v5 con 2 discos NO es gratuita: el coste por hora del SKU + discos + IP + egreso se factura aunque no juegues, mientras la VM este 'running'."
+  }
+}

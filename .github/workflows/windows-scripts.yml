@@ -1,0 +1,162 @@
+name: windows-scripts
+
+# Humo real en un runner Windows: el modulo importa, la ayuda carga, la configuracion se
+# valida y el preflight se ejecuta en un SO Windows autentico. NO instala apps ni toca
+# registros: eso pertenece a una VM del proyecto, no al runner compartido de GitHub.
+
+on:
+  pull_request:
+    paths: ["scripts/**", "config/**", "apps/**", "gaming/**"]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 4 * * 1"   # los lunes: el catalogo de apps caduca
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Prueba de humo en Windows Server
+    runs-on: windows-latest
+    env:
+      GVM_PERMISOS_SIN_ADMIN: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Config de prueba en la ruta que veran los scripts
+        shell: pwsh
+        run: |
+          $dir = Join-Path $env:ProgramData 'WinGamingVM\config'
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          Copy-Item config/vm.example.json (Join-Path $dir 'vm.json') -Force
+          foreach ($f in Get-ChildItem config -Filter *.json) { Copy-Item $f.FullName $dir -Force }
+
+      - name: El modulo importa e informa sus funciones
+        shell: pwsh
+        run: |
+          try {
+            Import-Module ./scripts/win/Modules/GamingVM/GamingVM.psd1 -Force -ErrorAction Stop
+          } catch {
+            Write-Host "::error file=scripts/win/Modules/GamingVM/GamingVM.psd1::importacion del modulo fallo: $($_.Exception.Message)"
+            throw
+          }
+          $exportadas = Get-Command -Module GamingVM
+          if ($exportadas.Count -lt 15) {
+            Write-Host "::error el modulo expone solo $($exportadas.Count) funciones (FunctionsToExport del manifiesto)"
+            throw "el modulo expone solo $($exportadas.Count) funciones"
+          }
+          Write-Host "funciones exportadas: $($exportadas.Count)"
+
+      - name: La ayuda comment-based esta en todos los scripts
+        shell: pwsh
+        run: |
+          $sinAyuda = @()
+          foreach ($s in Get-ChildItem scripts/win -Filter *.ps1) {
+            $ayuda = Get-Help $s.FullName -ErrorAction SilentlyContinue
+            if (-not $ayuda -or -not $ayuda.Synopsis -or -not $ayuda.Synopsis.Trim()) {
+              $sinAyuda += $s.Name
+              Write-Host "::error file=scripts/win/$($s.Name)::sin Get-Help (bloque <# .SYNOPSIS #>)"
+            }
+          }
+          if ($sinAyuda.Count) { throw "sin ayuda: $($sinAyuda -join ', ')" }
+          foreach ($s in Get-ChildItem scripts/win -Filter *.ps1) {
+            $ayuda = Get-Help $s.FullName -ErrorAction SilentlyContinue
+            if (-not $ayuda.Synopsis -or -not $ayuda.Synopsis.Trim()) { throw "$($s.Name) no tiene ayuda" }
+          }
+      - name: Scripts que modifican el sistema soportan -WhatIf
+        shell: pwsh
+        run: |
+          # (Get-Command ruta.ps1).SupportsShouldProcess NO existe: ExternalScriptInfo no
+          # expone los atributos del bloque CmdletBinding. Se lee el AST, que es lo unico
+          # que dice la verdad sobre el fichero que se va a ejecutar.
+          $soloLectura = @('Test-GamingReadiness.ps1', 'Get-SystemMetrics.ps1', 'Unlock-ConsoleSession.ps1')
+          $sinWhatIf = @()
+          foreach ($s in Get-ChildItem scripts/win -Filter *.ps1) {
+            if ($soloLectura -contains $s.Name) { continue }
+            $ast = [System.Management.Automation.Language.Parser]::ParseFile($s.FullName, [ref]$null, [ref]$null)
+            $attrs = $ast.FindAll({
+              param($n) $n -is [System.Management.Automation.Language.AttributeAst] -and
+                        $n.TypeName.Name -eq 'CmdletBinding'
+            }, $true)
+            $soporte = $false
+            foreach ($attr in $attrs) {
+              foreach ($na in $attr.NamedArguments) {
+                if ($na.ArgumentName -eq 'SupportsShouldProcess' -and $na.Extent.Text -notmatch '\$false') {
+                  $soporte = $true
+                }
+              }
+            }
+            if (-not $soporte) {
+              $sinWhatIf += $s.Name
+              Write-Host "::error file=scripts/win/$($s.Name)::le falta [CmdletBinding(SupportsShouldProcess = $true)]"
+            }
+          }
+          if ($sinWhatIf.Count) { throw "sin -WhatIf: $($sinWhatIf -join ', ')" }
+          Write-Host "todos los scripts que tocan el sistema soportan -WhatIf"
+
+      - name: Preflight y simulacion (sin permisos de admin, sin cambios)
+        shell: pwsh
+        run: |
+          # El bootstrap termina con 'exit 0' / 'exit 2' propios: llamado con '&' dentro del
+          # paso mata el proceso del step y no se imprimiria nada (eso era exactamente lo que
+          # pasaba: fallo sin mensaje). Cada caso va en su PROPIO pwsh, y el log que el script
+          # escribe en C:\ProgramData\WinGamingVM\logs se publica como anotaciones, que es lo
+          # unico que se puede leer desde la API de checks.
+          $base = Join-Path $env:ProgramData 'WinGamingVM'
+          $casos = @(
+            @{ Nombre = 'preflight'; Argumentos = @('-Fases', 'preflight', '-Simulacion') },
+            @{ Nombre = 'simulacion completa'; Argumentos = @('-Simulacion') }
+          )
+          $fallados = @()
+          foreach ($caso in $casos) {
+            $prev = $ErrorActionPreference
+            $ErrorActionPreference = 'Continue'
+            & pwsh -NoProfile -ExecutionPolicy Bypass -File ./scripts/win/Bootstrap-GamingVM.ps1 @($caso.Argumentos)
+            $codigo = $LASTEXITCODE
+            $ErrorActionPreference = $prev
+            if ($codigo -ne 0) {
+              $fallados += "$($caso.Nombre) (exit $codigo)"
+              Write-Host "::error::Bootstrap-GamingVM $($caso.Nombre) devolvio $codigo"
+              $logs = @(Get-ChildItem (Join-Path $base 'logs') -Filter '*.log' -ErrorAction SilentlyContinue |
+                Sort-Object LastWriteTime -Descending | Select-Object -First 5)
+              if ($logs.Count) {
+                # GitHub recorta las anotaciones por check: volcando el log entero se pierden
+                # las lineas ERROR (las unicas que explican) y quedan las intrascendentes del
+                # final. Cada script de fase escribe su propio log, asi que se miran los cinco
+                # mas recientes y de cada uno solo sus errores.
+                foreach ($lg in $logs) {
+                  $registro = @(Get-Content -LiteralPath $lg.FullName)
+                  $claves = @($registro | Where-Object { $_ -match 'ERROR|abortada|Exception|fallida' } | Select-Object -Last 3)
+                  foreach ($l in @($claves | Where-Object { $_.Trim() })) {
+                    # \s+ evita meter escapes de control en el YAML; el % se escapa porque
+                    # los workflow commands de GitHub interpretan %25 y compañía.
+                    $limpio = ($l -replace '\s+', ' ').Trim() -replace '%', '%25'
+                    Write-Host "::error::log|$($lg.Name): $limpio"
+                  }
+                }
+              } else {
+                Write-Host '::error::no hay log en el BaseDir: el script murio antes de abrirlo'
+              }
+            } else {
+              Write-Host "OK Bootstrap-GamingVM ($($caso.Nombre))"
+            }
+          }
+          if ($fallados.Count) {
+            throw "simulacion del bootstrap fallo en: $($fallados -join ', ')"
+          }
+
+      - name: 'Informe de preparacion (informativo: el runner no es una VM de gaming)'
+        continue-on-error: true
+        shell: pwsh
+        run: ./scripts/win/Test-GamingReadiness.ps1 -Exportar
+
+      - name: Adjuntar informe del runner
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: informe-runner-windows
+          path: C:\ProgramData\WinGamingVM\informes\
+          if-no-files-found: ignore
+          retention-days: 7

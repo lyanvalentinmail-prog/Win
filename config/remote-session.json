@@ -1,0 +1,279 @@
+{
+  "schemaVersion": "1.0",
+  "descripcion": "Definiciones de sesion remota (RDP / Windows App). Las claves de registro son politicas documentadas por Microsoft bajo Terminal Services y se aplican de forma idempotente desde scripts/win/Set-RemoteDesktop.ps1. Ningun valor depende de RemoteFX vGPU (tecnologia retirada en 2020): con GPU se usa el driver WDDM del host + codificacion AVC negociada.",
+  "referencias": [
+    "Use WDDM graphics display driver for Remote Desktop Connections -> fEnableWddmDriver",
+    "AVC 4:4:4 y codificador de hardware -> AVC444ModePreferred, AVCHardwareEncodePreferred, bEnumerateHWBeforeSW",
+    "Set color depth for remote desktop sessions -> ColorDepth",
+    "Timeouts de RDS Host -> MaxIdleTime, MaxDisconnectionTime, MaxReconnectionTime (milisegundos)",
+    "Seguridad -> fDenyTSConnections, SecurityLayer, UserAuthentication (NLA), MinEncryptionLevel"
+  ],
+  "claveRegistro": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows NT\\Terminal Services",
+  "politicasBase": {
+    "fDenyTSConnections": 0,
+    "UserAuthentication": 1,
+    "SecurityLayer": 1,
+    "MinEncryptionLevel": 3,
+    "ColorDepth": 4,
+    "fSingleSessionPerUser": 1,
+    "fEnableWddmDriver": 1,
+    "AVC444ModePreferred": 1,
+    "AVCHardwareEncodePreferred": 1,
+    "bEnumerateHWBeforeSW": 1,
+    "fEnableFontCaching": 1,
+    "fDisableClip": 0,
+    "fDisableCdm": 1,
+    "fDisablePrint": 1,
+    "fDisablePort": 1,
+    "fDisablePNPRedir": 1,
+    "MaxIdleTime": 0,
+    "MaxDisconnectionTime": 0,
+    "MaxReconnectionTime": 180000
+  },
+  "notasPoliticas": {
+    "fEnableWddmDriver": "1 = la sesion remota usa el driver de pantalla WDDM (necesario para render GPU dentro de RDP). Requiere una GPU real o particionada con driver instalado: si no hay GPU, este valor no hace aparecer ninguna y el informe de estado lo marca 'no aplicable'.",
+    "AVC444ModePreferred": "1 = prefiere H.264/AVC 4:4:4 (texto nitido, color exacto). Solo se negocia si el host puede codificar (GPU + WDDM) y el cliente lo soporta.",
+    "AVCHardwareEncodePreferred": "1 = prefiere el codificador de hardware al de software.",
+    "bEnumerateHWBeforeSW": "1 = enumera primero los codificadores de hardware.",
+    "ColorDepth": "4 = 32 bits. Bajar a 3 (24 bits) o 2 (16 bits) solo en enlaces muy lentos: degrada el color.",
+    "fDisableCdm": "1 = bloquea el redireccionamiento de discos del dispositivo cliente (por defecto por seguridad). Se relaja cuando remote.session.driveRedirection = true.",
+    "fDisableClip": "0 = portapapeles permitido; 1 = bloqueado.",
+    "fDisablePrint / fDisablePort / fDisablePNPRedir": "Impresoras, puertos serie y dispositivos PnP/USB del cliente: bloqueados salvo solicitud explicita.",
+    "MaxReconnectionTime": "Milisegundos que el host conserva la sesion esperando reconexiones (aqui 3 min). La reconexion la inicia el cliente.",
+    "MaxIdleTime": "0 = no desconectar por inactividad. Un valor bajo ahorra coste pero corta partidas.",
+    "GraphicsProfile": "Politica 'Configure RemoteFX adaptive graphics'. Solo se fija en los presets no predeterminados; en builds donde no existe, ignorarlo no rompe nada.",
+    "fDisableCam": "0 = 'Allow audio and video playback redirection' permitida (el audio suena en el cliente). 1 = bloqueada. Es la clave que escribe la GPO; no existe 'fDisableAudioPlayback' como politica.",
+    "fDisableAudioCapture": "1 = 'Allow audio recording redirection' bloqueada: el micro del cliente NO llega a la VM. El proyecto la deja en 1 por defecto (privacidad) y el usuario la cambia si quiere chat de voz."
+  },
+  "presets": {
+    "low-latency": {
+      "descripcion": "Movimiento fluido y reaccion rapida; acepta algo de compresion. Es el preset recomendado si juegas por RDP porque no hay canal dedicado.",
+      "politicas": {
+        "ColorDepth": 3,
+        "AVC444ModePreferred": 0,
+        "GraphicsProfile": 3
+      },
+      "graphicsPerfilNota": "GraphicsProfile 3 = 'Optimized for movement' en la politica 'Configure RemoteFX adaptive graphics'.",
+      "rdp": {
+        "networktype": 1,
+        "compression": 0,
+        "bitmapcachepersistenable": 1,
+        "bitmapcachesize": 32000,
+        "disable themes": 1,
+        "disable menu anims": 1,
+        "disable full window drag": 1,
+        "disable wallpaper": 1
+      }
+    },
+    "balanced": {
+      "descripcion": "Equilibrio entre calidad y ancho de banda. Predeterminado del proyecto.",
+      "politicas": {
+        "ColorDepth": 4,
+        "AVC444ModePreferred": 1
+      },
+      "rdp": {
+        "networktype": 1,
+        "compression": 1,
+        "bitmapcachepersistenable": 1,
+        "bitmapcachesize": 15000,
+        "disable themes": 0,
+        "disable menu anims": 1,
+        "disable full window drag": 1,
+        "disable wallpaper": 0
+      }
+    },
+    "fidelity": {
+      "descripcion": "Maxima fidelidad visual (diseno, video, capturas). Requiere mucho ancho de banda.",
+      "politicas": {
+        "ColorDepth": 4,
+        "AVC444ModePreferred": 1,
+        "GraphicsProfile": 2
+      },
+      "graphicsPerfilNota": "GraphicsProfile 2 = 'Static / optimized for quality'.",
+      "rdp": {
+        "networktype": 1,
+        "compression": 1,
+        "bitmapcachepersistenable": 1,
+        "bitmapcachesize": 32000,
+        "disable themes": 0,
+        "disable menu anims": 0,
+        "disable full window drag": 0,
+        "disable wallpaper": 0
+      }
+    }
+  },
+  "clienteRdp": {
+    "descripcion": "Claves usadas por scripts/client/New-RemoteDesktopFile.ps1 para generar un .rdp optimizado para mstsc.exe (acceso desde un PC Windows). Formato 'clave:tipo:valor' oficial de los ficheros .rdp.",
+    "soporteAndroid": "IMPORTANTE: Windows App en Android NO importa ficheros .rdp; su configuracion se hace dentro de la app. El .rdp generado sirve para el acceso desde Windows y como documentacion del resto de clientes (iOS/macOS soportan un subconjunto).",
+    "claves": {
+      "full address": {
+        "tipo": "s",
+        "valor": "<HOST>",
+        "nota": "IP publica o nombre/DNS del tunel"
+      },
+      "alternate full address": {
+        "tipo": "s",
+        "valor": "",
+        "nota": "Solo con gateway; vacio por defecto"
+      },
+      "screen mode id": {
+        "tipo": "i",
+        "valor": 2,
+        "nota": "1 = ventana, 2 = pantalla completa"
+      },
+      "desktopwidth": {
+        "tipo": "i",
+        "valor": 1920
+      },
+      "desktopheight": {
+        "tipo": "i",
+        "valor": 1080
+      },
+      "session bpp": {
+        "tipo": "i",
+        "valor": 32,
+        "nota": "15/16/24/32 bits"
+      },
+      "keyboardhook": {
+        "tipo": "i",
+        "valor": 2,
+        "nota": "0 = local, 1 = remoto, 2 = local en pantalla completa (recomendado: atajos como Alt+Tab y Win+G funcionan en la VM)"
+      },
+      "audiomode": {
+        "tipo": "i",
+        "valor": 1,
+        "nota": "0 = no redirigir, 1 = reproducir en el cliente, 2 = seguir directiva del sistema"
+      },
+      "audiocapturemode": {
+        "tipo": "i",
+        "valor": 0
+      },
+      "redirectclipboard": {
+        "tipo": "i",
+        "valor": 1
+      },
+      "redirectprinters": {
+        "tipo": "i",
+        "valor": 0
+      },
+      "redirectcomports": {
+        "tipo": "i",
+        "valor": 0
+      },
+      "redirectsmartcards": {
+        "tipo": "i",
+        "valor": 0
+      },
+      "drivestoredirect": {
+        "tipo": "s",
+        "valor": "",
+        "nota": "* para montar las unidades del cliente (solo si lo permites en el config)"
+      },
+      "enablecredsspsupport": {
+        "tipo": "i",
+        "valor": 1,
+        "nota": "Requerido para NLA"
+      },
+      "authentication level": {
+        "tipo": "i",
+        "valor": 2,
+        "nota": "0 = conectar sin avisar, 2 = avisar si falla la autenticacion del servidor, 3 = no conectar"
+      },
+      "public mode": {
+        "tipo": "i",
+        "valor": 1,
+        "nota": "1 = no ofrece guardar credenciales en un equipo compartido"
+      },
+      "networktype": {
+        "tipo": "i",
+        "valor": 1,
+        "nota": "1 = LAN, 2 = banda ancha, 3 = acceso telefonico"
+      },
+      "bandwidthautodetect": {
+        "tipo": "i",
+        "valor": 1
+      },
+      "smart sizing": {
+        "tipo": "i",
+        "valor": 1,
+        "nota": "1 = escala el escritorio remoto a la ventana: util en moviles y portatiles"
+      },
+      "use multimon": {
+        "tipo": "i",
+        "valor": 0
+      },
+      "multimonitormode": {
+        "tipo": "i",
+        "valor": 0
+      },
+      "bitmapcachesize": {
+        "tipo": "i",
+        "valor": 15000
+      },
+      "bitmapcachepersistenable": {
+        "tipo": "i",
+        "valor": 1
+      },
+      "disable themes": {
+        "tipo": "i",
+        "valor": 0
+      },
+      "disable menu anims": {
+        "tipo": "i",
+        "valor": 1
+      },
+      "disable full window drag": {
+        "tipo": "i",
+        "valor": 1
+      },
+      "disable cursor setting": {
+        "tipo": "i",
+        "valor": 1
+      },
+      "disable wallpaper": {
+        "tipo": "i",
+        "valor": 0,
+        "nota": "Ponlo a 1 si quieres ganar fps en enlaces lentos (se pierde el fondo de pantalla)"
+      },
+      "promptcredentialonce": {
+        "tipo": "i",
+        "valor": 1
+      },
+      "prompt for credentials on client": {
+        "tipo": "i",
+        "valor": 0
+      },
+      "targetadaptorid": {
+        "tipo": "s",
+        "valor": "",
+        "nota": "Vacio = monitor/adapter por defecto del cliente"
+      }
+    }
+  },
+  "windowsAppAndroid": {
+    "descripcion": "Ajustes documentados que SI existen en Windows App para Android (Google Play, id com.microsoft.rdc.androidx, Android 11+). Fuente: 'Use keyboard, mouse, touch, and pen in Windows App' (Microsoft Learn).",
+    "soportado": [
+      "Teclado y raton fisicos (Bluetooth o USB) del dispositivo Android: se redirigen a la sesion remota.",
+      "Teclado en pantalla de Android, accesible desde el icono del teclado en la barra de conexion.",
+      "Dos modos de raton: 'Direct touch' (tocar equivale a hacer clic en esa posicion, sin puntero) y 'Mouse pointer' (arrastre relativo). Se cambia tocando la barra de conexion.",
+      "Gestos multi-toc nativos cuando el host es Windows 10 o posterior.",
+      "Ajuste 'Use scancode input when available' (Perfil > General): envia scan-codes en lugar de unicode; mejora los juegos que leen teclado por DirectInput/RawInput.",
+      "Redireccion de portapapeles, audio de la sesion y reanudacion de la sesion tras una perdida de red.",
+      "Selector de resolucion y de calidad en el perfil de conexion del equipo agregado (Add PC > Display / Resolucion)."
+    ],
+    "noSoportado": [
+      "Mando/Gamepad: Windows App para Android NO redirige mandos Bluetooth o USB al equipo remoto, y no hay directiva en la VM que lo habilite.",
+      "Redireccion USB generica (dongles Xbox/8BitDo, volantes, mandos con firmware propio).",
+      "Alta tasa de refresco variable (VRR), HDR y 10-bits sobre RDP en este cliente.",
+      "Importacion de ficheros .rdp con parametros avanzados.",
+      "Camaras web y microfonos del dispositivo (el cliente reproduce audio, no captura video para la VM).",
+      "Capas de control tactile con joystick/botones: Windows App no las ofrece. Ver docs/09-controles-tactiles.md."
+    ]
+  },
+  "seguridad": {
+    "noExponer3389": "El proyecto solo abre el 3389 a las CIDR listadas en remote.allowedCidrs. Si no tienes IP fija, usa remote.tunnel = tailscale | ssh | bastion | vpn: el puerto queda cerrado a Internet y el cliente entra por el tunel.",
+    "nlaObligatorio": "UserAuthentication=1 (NLA) es obligatorio: filtra la conexion antes de levantar el stack de RDP.",
+    "tls": "SecurityLayer=1 (negociar TLS). Verifica la huella del certificado del host la primera vez; en una VM con certificado autofirmado, fijala manualmente en el cliente.",
+    "auditoria": "Con security.auditLogging=true se habilita la auditoria de eventos de Logon/Logoff de Terminal Services (ID 1149, 21, 22, 24, 25)."
+  }
+}

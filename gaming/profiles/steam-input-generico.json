@@ -1,0 +1,135 @@
+{
+  "$schema": "../schemas/gaming-profile.schema.json",
+  "schemaVersion": "1.0",
+  "id": "steam-input-generico",
+  "nombre": "Plantilla: cualquier juego de Steam con soporte de mando",
+  "juego": {
+    "tienda": "steam",
+    "launcher": "Steam",
+    "appId": null,
+    "procesos": [
+      "steam.exe"
+    ]
+  },
+  "requisitos": {
+    "fuente": "https://help.steampowered.com/en/faqs/view/7123-E2D7-9C97-C4D8",
+    "vcpu": 4,
+    "ramGiB": 8,
+    "vramGiB": 4,
+    "almacenamientoGiB": 30,
+    "apiGrafica": "Variable",
+    "nota": "Plantilla: copiar, cambiar id/procesos y ajustar a los requisitos del juego concreto."
+  },
+  "compatibilidadVm": {
+    "antitrampas": {
+      "sistemas": [
+        "propio"
+      ],
+      "vm": "desconocida",
+      "riesgoBaneo": "medio",
+      "nota": "Consultar gaming/antitrampas.md: VAC no banea por usar VM, pero EAC/BattlEye en modo kernel si la rechazan. Antes de jugar online, verificar el estado del juego."
+    },
+    "vmReportada": "no-verificada",
+    "necesitaGpu": true
+  },
+  "rendimiento": {
+    "preset": "equilibrado",
+    "fpsObjetivo": 60,
+    "fpsCap": 60,
+    "resolucion": null,
+    "ajustes": [
+      {
+        "clave": "VSync",
+        "valor": "off en el juego, on en el stream",
+        "efecto": "Doble vsync duplica la latencia",
+        "donde": "dentro-del-juego",
+        "automatizable": false
+      },
+      {
+        "clave": "Modo ventana sin bordes",
+        "valor": "borderless",
+        "efecto": "Minimiza el cambio de modo de pantalla al alt-tab en RDP",
+        "donde": "dentro-del-juego",
+        "automatizable": false
+      }
+    ],
+    "parametrosLanzamiento": []
+  },
+  "canales": {
+    "rdp": {
+      "recomendado": false,
+      "nota": "Solo para juegos lentos/por turnos."
+    },
+    "moonlight": {
+      "recomendado": true,
+      "nota": "Canal por defecto para cualquier juego con soporte de mando; ajusta bitrate y fps al preset de config/gaming-presets.json."
+    }
+  },
+  "controles": {
+    "nativo": [
+      "teclado",
+      "raton",
+      "mando"
+    ],
+    "mando": {
+      "soportado": true,
+      "tipo": "xinput",
+      "nota": "Steam Input traduce el mando virtual del cliente a cualquier API que el juego espere."
+    },
+    "sensibilidad": {
+      "raton": 1.0,
+      "mouseSensitivity": 10,
+      "aceleracion": false
+    },
+    "mapeoTactil": {
+      "modo": "mando-virtual",
+      "layout": "../touch/layouts/accion-2sticks.json"
+    },
+    "teclas": [],
+    "atajos": [
+      {
+        "nombre": "abrir-menu",
+        "teclas": "Guide/Xbox",
+        "via": "vapor-overlay",
+        "nota": "En Steam el overlay se abre con la tecla Guide que Moonlight emula; desde Android tambien con el quick-menu del cliente."
+      },
+      {
+        "nombre": "salir-del-juego",
+        "teclas": "Alt+F4",
+        "via": "juego"
+      }
+    ],
+    "indicadores": [
+      {
+        "nombre": "latencia",
+        "origen": "cliente-moonlight",
+        "activar": "Quick menu > Show performance info"
+      },
+      {
+        "nombre": "fps",
+        "origen": "sunshine",
+        "activar": "Sunshine log o overlay del cliente"
+      },
+      {
+        "nombre": "uso-gpu",
+        "origen": "task-manager",
+        "activar": "Administrador > Rendimiento > GPU (necesita WDDM)"
+      }
+    ]
+  },
+  "aplicacion": {
+    "host": [
+      "sensibilidad-raton",
+      "aceleracion-raton",
+      "registro-de-ajustes"
+    ],
+    "cliente": [
+      "layout-tactil",
+      "sensibilidad-trackpad",
+      "mostrar-estadisticas"
+    ],
+    "pasosManuales": [
+      "Editar esta copia para cada juego: gaming/profiles/<juego>.json"
+    ]
+  }
+}

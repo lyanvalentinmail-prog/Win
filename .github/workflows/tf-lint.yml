@@ -1,0 +1,120 @@
+name: tf-lint
+
+on:
+  pull_request:
+    paths: ["infra/**", ".github/workflows/tf-lint.yml"]
+  push:
+    branches: [main]
+    paths: ["infra/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    name: fmt + init + validate + tflint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        modulo: [azure, aws, kvm]
+    defaults:
+      run:
+        working-directory: infra/${{ matrix.modulo }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      - name: terraform fmt -check
+        run: |
+          # 'terraform fmt -check' sale con codigo 3 cuando hay ficheros por formatear y el
+          # log de Actions es dificil de leer desde una API: el diff se convierte en
+          # anotaciones del check (se ven en la pestana "Files changed" del PR).
+          # El '|| rc=$?' evita que 'set -e' aborte el paso antes de imprimir nada.
+          rc=0
+          terraform fmt -check -diff -recursive >fmt.diff 2>&1 || rc=$?
+          cat fmt.diff
+          if [ "$rc" -ne 0 ]; then
+            echo "::error::el modulo no pasa 'terraform fmt'. Arreglo: terraform fmt -recursive infra/${{ matrix.modulo }}"
+            ficheros=$(grep -E '^(---|\+\+\+)' fmt.diff | sed 's/^[+a-z-]* [ab]\///' | sort -u | head -8)
+            for f in $ficheros; do
+              echo "::error file=infra/${{ matrix.modulo }}/$f::necesita formato (terraform fmt)"
+            done
+            n=0
+            while IFS= read -r linea; do
+              n=$((n + 1))
+              [ "$n" -gt 40 ] && break
+              echo "::error::fmt| ${linea}"
+            done < <(grep -E '^[+-][^+-]' fmt.diff | head -40)
+            exit 1
+          fi
+
+      - name: terraform init
+        run: terraform init -backend=false -input=false
+
+      - name: terraform validate
+        env:
+          MOD: infra/${{ matrix.modulo }}
+        run: |
+          # En modo -json Terraform no sale con codigo distinto de 0 cuando hay errores de
+          # validacion: hay que leer los diagnosticos. Y el wrapper de setup-terraform puede
+          # mezclar su propio mensaje con el JSON, asi que se busca el primer '{'.
+          rc=0
+          terraform validate -json >validate.json 2>validate.err || rc=$?
+          python3 - <<'PY'
+          import json, os, re
+          texto = open('validate.json', encoding='utf-8', errors='replace').read()
+          mod = os.environ.get('MOD', '.')
+          ini = texto.find('{')
+          n = 0
+          if ini < 0:
+              err = open('validate.err', encoding='utf-8', errors='replace').read()
+              uno = re.sub(r'\s+', ' ', (texto + ' ' + err))[:900]
+              print('::error::sin JSON de validacion; salida cruda: ' + uno.replace('%', '%25'))
+          else:
+              try:
+                  # el wrapper de setup-terraform puede pegar su propio mensaje despues del
+                  # JSON: raw_decode se queda con el primer objeto valido y ignora el resto.
+                  datos = json.JSONDecoder().raw_decode(texto[ini:])[0]
+              except Exception as exc:  # JSON roto: volcarlo tal cual
+                  print('::error::validate.json ilegible (' + str(exc) + ')')
+                  datos = {}
+              for d in datos.get('diagnostics', []):
+                  r = d.get('range') or {}
+                  linea = (r.get('start') or {}).get('line') or 1
+                  fich = r.get('filename') or 'main.tf'
+                  msg = re.sub(r'\s+', ' ', f"{d.get('summary', '')}: {d.get('detail', '')}").replace('%', '%25')[:900]
+                  if d.get('severity') == 'error':
+                      n += 1
+                      print(f'::error file={mod}/{fich},line={linea}::{msg}')
+                  else:
+                      print(f'::warning file={mod}/{fich},line={linea}::{msg}')
+              if n:
+                  print('::error::' + str(n) + ' errores de validacion en ' + mod)
+          open('errores.txt', 'w').write(str(n))
+          PY
+          n=$(cat errores.txt 2>/dev/null || echo 0)
+          if [ "$n" -gt 0 ]; then
+            exit 1
+          fi
+          if [ "$rc" -ne 0 ]; then
+            echo "::error::terraform validate fallo de forma inesperada (rc=$rc)"
+            cat validate.json validate.err
+            exit "$rc"
+          fi
+          echo "terraform validate: sin errores en ${{ matrix.modulo }}"
+
+      - uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.53.0
+
+      - name: tflint
+        run: |
+          tflint --init --config="$GITHUB_WORKSPACE/.tflint.hcl" || true
+          tflint --config="$GITHUB_WORKSPACE/.tflint.hcl" --format=compact

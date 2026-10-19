@@ -1,0 +1,81 @@
+{
+  "$schema": "../schemas/gaming-profile.schema.json",
+  "schemaVersion": "1.0",
+  "id": "stardew-valley",
+  "nombre": "Stardew Valley",
+
+  "juego": {
+    "tienda": "steam",
+    "launcher": "Steam",
+    "appId": "413150",
+    "procesos": ["StardewModdingAPI.exe", "Stardew Valley.exe"],
+    "urlFicha": "https://store.steampowered.com/app/413150/"
+  },
+
+  "requisitos": {
+    "fuente": "https://store.steampowered.com/app/413150/Stardew_Valley/",
+    "vcpu": 2,
+    "ramGiB": 2,
+    "vramGiB": 0.256,
+    "almacenamientoGiB": 0.5,
+    "apiGrafica": "OpenGL 4.0 / DirectX via MonoGame",
+    "nota": "Ejemplo de juego 2D 'seguro' para VM: corre en una GPU particionada de 4 GiB e incluso con render por software a 60 fps."
+  },
+
+  "compatibilidadVm": {
+    "antitrampas": { "sistemas": ["ninguno"], "vm": "permitida", "riesgoBaneo": "bajo" },
+    "vmReportada": "documentada",
+    "necesitaGpu": false,
+    "nota": "Sin GPU: usar el preset 'compatibilidad' y limitar a 30-60 fps (x264 consume 1-2 vCPU)."
+  },
+
+  "rendimiento": {
+    "preset": "compatibilidad",
+    "fpsObjetivo": 60,
+    "fpsCap": 60,
+    "resolucion": "1280x720@60",
+    "ajustes": [
+      { "clave": "resolution", "valor": "1280x720", "efecto": "Menos pixeles que codificar: baja la CPU en modo software", "donde": "archivo-de-configuracion-del-juego", "automatizable": false },
+      { "clave": "vsyncInterval", "valor": "1", "efecto": "Evita que el juego gaste GPU sobrando frames", "donde": "archivo-de-configuracion-del-juego", "automatizable": false }
+    ],
+    "parametrosLanzamiento": []
+  },
+
+  "canales": {
+    "rdp": { "recomendado": true, "nota": "Juego por turnos de ritmo lento: RDP con AVC 4:4:4 es perfectamente disfrutable y no necesita GPU de codificacion dedicada." },
+    "moonlight": { "recomendado": true, "nota": "Mejor si quieres el overlay tactil y el mando virtual." }
+  },
+
+  "controles": {
+    "nativo": ["teclado", "raton", "mando"],
+    "mando": { "soportado": true, "tipo": "xinput", "nota": "Soporte de mando completo de fabrica (incl. gatillos para regar/herramientas)." },
+    "sensibilidad": { "raton": 1.0, "mouseSensitivity": 10, "aceleracion": false, "inversionEjeY": false },
+    "mapeoTactil": { "modo": "mando-virtual", "layout": "../touch/layouts/point-and-click.json", "nota": "Zona de toque absoluto para seleccionar casillas + 6 botones de accion + D-pad." },
+    "teclas": [
+      { "original": "gamepad-a", "nuevo": "enter", "motivo": "Confirmar / interactuar" },
+      { "original": "gamepad-b", "nuevo": "escape", "motivo": "Cancelar" },
+      { "original": "gamepad-x", "nuevo": "mouse-left" },
+      { "original": "gamepad-y", "nuevo": "x", "motivo": "Herramienta activa" },
+      { "original": "gamepad-lb", "nuevo": "q" },
+      { "original": "gamepad-rb", "nuevo": "e", "motivo": "Inventario" }
+    ],
+    "atajos": [
+      { "nombre": "pausa", "teclas": "Esc", "via": "juego" },
+      { "nombre": "inventario", "teclas": "E", "via": "juego" },
+      { "nombre": "mapa", "teclas": "M", "via": "juego" },
+      { "nombre": "abrir-menu", "teclas": "Select", "via": "cliente-moonlight" }
+    ],
+    "indicadores": [
+      { "nombre": "fps", "origen": "sunshine", "activar": "Sunshine web UI > Logs (o el overlay del cliente)" }
+    ]
+  },
+
+  "aplicacion": {
+    "host": ["sensibilidad-raton", "aceleracion-raton", "remap-teclas-powertoys", "registro-de-ajustes"],
+    "cliente": ["layout-tactil", "resolucion-stream", "mostrar-estadisticas"],
+    "pasosManuales": [
+      "Reproducir el layout point-and-click.json en el cliente (Move/Resize) y asignar la zona de toque a 'mouse absoluto'.",
+      "Steam > Stardew Valley > Propiedades > Mando > 'Forzar Steam Input' si quieres usar el perfil de Steam en lugar de las teclas nativas."
+    ]
+  }
+}

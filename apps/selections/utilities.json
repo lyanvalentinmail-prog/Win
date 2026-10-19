@@ -1,0 +1,48 @@
+{
+  "$schema": "./selections.schema.json",
+  "schemaVersion": "1.0",
+  "nombre": "utilities",
+  "descripcion": "Utilidades de diario: compresion, multimedia, edicion, navegadores, captura, diagnostico.",
+  "comoEditar": "Anade o quita 'id' exactos de ../catalog.json. Puedes crear apps/selections/local.json (ignorado por git) con el mismo formato para no tocar los ficheros del repositorio.",
+  "aplicaciones": [
+    {
+      "id": "7zip.7zip"
+    },
+    {
+      "id": "Microsoft.WindowsTerminal"
+    },
+    {
+      "id": "VideoLAN.VLC"
+    },
+    {
+      "id": "Microsoft.VisualStudioCode"
+    },
+    {
+      "id": "Google.Chrome"
+    },
+    {
+      "id": "Mozilla.Firefox"
+    },
+    {
+      "id": "Microsoft.PowerToys"
+    },
+    {
+      "id": "Notepad++.Notepad++"
+    },
+    {
+      "id": "ShareX.ShareX"
+    },
+    {
+      "id": "TechPowerUp.GPU-Z"
+    },
+    {
+      "id": "CPUID.CPU-Z"
+    },
+    {
+      "id": "CPUID.HWMonitor"
+    },
+    {
+      "id": "Tailscale.Tailscale"
+    }
+  ]
+}

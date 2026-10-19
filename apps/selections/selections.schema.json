@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/lyanvalentinmail-prog/Win/apps/selections/selections.schema.json",
+  "title": "Seleccion de aplicaciones",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "nombre",
+    "aplicaciones"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "nombre": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]{1,32}$"
+    },
+    "descripcion": {
+      "type": "string",
+      "maxLength": 300
+    },
+    "comoEditar": {
+      "type": "string"
+    },
+    "aplicaciones": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 60,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]{1,127}$"
+          },
+          "version": {
+            "type": "string"
+          },
+          "motivo": {
+            "type": "string",
+            "maxLength": 200
+          }
+        }
+      }
+    }
+  }
+}

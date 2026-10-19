@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0",
+  "descripcion": "Presets de rendimiento del canal de juego (Sunshine/Moonlight) y sus contrapartidas reales. Los numeros son puntos de partida medidos en la documentacion upstream de Moonlight/Sunshine y en la guia de AVD; no son garantias: la latencia la domina el enlace de red entre tu movil y la region del proveedor.",
+  "geografia": {
+    "nota": "Regla practica: 1 ms de RTT por cada ~100 km de distancia optica + 3-8 ms de la ultima milla movil. Una VM en westeurope (Amsterdam/Paris) desde Treinta y Tres (UY) sumara ~170-220 ms de RTT: jugable para titulos por turnos, no para shooters competitivos. Elige la region mas cercana a TI, no la mas barata.",
+    "medirAntes": "scripts/win/Get-SystemMetrics.ps1 -Ping <gateway> y el 'ping test' de la app cliente; o desde tu movil: 'ping -c 20 <IP-VM>' por termux."
+  },
+  "presets": {
+    "compatibilidad": {
+      "usadoPara": "Enlaces moviles 4G inestables, dispositivos antiguos, HLS/video suave",
+      "sunshine": { "width": 1280, "height": 720, "fps": 30, "codex": "h264", "bitrateMbps": 10, "encoder": "auto", "audio": true, "qp": 28 },
+      "rdp": { "quality": "low-latency", "colorDepth": 16, "avc444": false, "anchoBandMbps": 8 },
+      "presupuestoCpu": "1-2 vCPU solo para codificar si el encoder es software",
+      "latenciaAnadidaEstimadaMs": [14, 28]
+    },
+    "equilibrado": {
+      "usadoPara": "Predeterminado: 1080p60 en 5 GHz / fibra o 4G bueno",
+      "sunshine": { "width": 1920, "height": 1080, "fps": 60, "codec": "auto", "bitrateMbps": 25, "encoder": "auto", "audio": true, "qp": 24 },
+      "rdp": { "quality": "balanced", "colorDepth": 32, "avc444": true, "anchoBandMbps": 25 },
+      "presupuestoCpu": "con GPU: <10 % de CPU para NVENC; sin GPU el preset NO debe usarse",
+      "latenciaAnadidaEstimadaMs": [8, 18]
+    },
+    "calidad": {
+      "usadoPara": "Fibra >=100 Mbps de bajada y TV/tablet con descodificador HEVC/AV1",
+      "sunshine": { "width": 2560, "height": 1440, "fps": 60, "codec": "hevc", "bitrateMbps": 60, "encoder": "nvenc", "audio": true, "qp": 20 },
+      "rdp": { "quality": "fidelity", "colorDepth": 32, "avc444": true, "anchoBandMbps": 60 },
+      "presupuestoCpu": "6+ vCPU y GPU con codificador HEVC dedicado",
+      "latenciaAnadidaEstimadaMs": [10, 22]
+    },
+    "competitivo": {
+      "usadoPara": "Juegos rapidos en LAN o region muy cercana; exige red cableada en el cliente",
+      "sunshine": { "width": 1920, "height": 1080, "fps": 120, "codec": "hevc", "bitrateMbps": 40, "encoder": "nvenc", "audio": true, "qp": 22, "optimizations": ["frame pacing", "0 buffers en el descodificador del cliente"] },
+      "rdp": { "quality": "low-latency", "colorDepth": 24, "avc444": false, "anchoBandMbps": 40 },
+      "notaRealista": "120 fps remotos con input-to-photon < 40 ms NO es alcanzable por RDP; con Sunshine/Moonlight y RTT < 20 ms si lo es en juegos ligeros. No se promete para titulos AAA con GPU particionada 1/6.",
+      "latenciaAnadidaEstimadaMs": [6, 14]
+    }
+  },
+  "anchoDeBandaYCoste": {
+    "formula": "GB/hora ≈ bitrateMbps * 3600 / 8 / 1000. Ej.: 25 Mbps ≈ 11,25 GiB/hora; 60 Mbps ≈ 27 GiB/hora.",
+    "implicacion": "En cloud el egreso se paga por GiB: 100 h de juego a 25 Mbps ≈ 1,1 TiB de salida. Si tu proveedor cobra el egreso caro, puede superar el coste de la propia VM.",
+    "mitigacion": "Jugar cerca del proveedor (misma region), usar preset equilibrado, o montar el host en casa (libvirt) donde el egreso no existe."
+  },
+  "reglasDeValidacion": {
+    "sinGpuNoHayCanalJuego": "Si gpu.mode = none o la comprobacion de codificador de hardware falla, gaming.channel pasa a 'rdp' y el preset se ignora. Nunca se fuerza 'software' salvo que gaming.sunshine.encoder = 'software' explicitamente (el informe lo marca como degradado).",
+    "vramMinima": { "1080p": 3, "1440p": 4, "4k": 8, "unidad": "GiB", "nota": "Umbral practico para titulos AAA ligeros; un perfil de 1080p/60 en 3 GiB de VRAM recortara texturas en muchos juegos." },
+    "cpuMinima": { "escritorio": 2, "juegoLigero": 4, "juegoAAA": 6, "unidad": "vCPU", "nota": "vCPUs de 3,2-4,0 GHz (Milan) en NVadsA10_v5; en Dsv5 son ~2,8-3,5 GHz: el mismo juego ira mas lento." },
+    "ramMinima": { "escritorio": 8, "juegoLigero": 16, "juegoAAA": 24, "unidad": "GiB" }
+  }
+}

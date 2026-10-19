@@ -1,0 +1,89 @@
+{
+  "$schema": "../schemas/gaming-profile.schema.json",
+  "schemaVersion": "1.0",
+  "id": "fortnite",
+  "nombre": "Fortnite (perfil de ADVERTENCIA: no jugar en VM)",
+  "juego": {
+    "tienda": "epic",
+    "launcher": "EpicGamesLauncher.exe",
+    "appId": null,
+    "procesos": [
+      "FortniteClient-Win64-Shipping.exe"
+    ],
+    "urlFicha": "https://www.epicgames.com/fortnite/es-es/system-requirements"
+  },
+  "requisitos": {
+    "fuente": "https://www.epicgames.com/help/en-US/fortnite-c5619751946907/fortnite-getting-started-c5619751946907/fortnite-minimum-system-requirements-a5619771966363",
+    "vcpu": 4,
+    "ramGiB": 8,
+    "vramGiB": 4,
+    "almacenamientoGiB": 40,
+    "apiGrafica": "DirectX 11/12 SM6",
+    "nota": "Hardware aparte, el bloqueo es de software, no de rendimiento."
+  },
+  "compatibilidadVm": {
+    "antitrampas": {
+      "sistemas": [
+        "EAC",
+        "Vanguard"
+      ],
+      "vm": "restringida",
+      "riesgoBaneo": "alto",
+      "nota": "Fortnite exige Secure Boot, TPM 2.0 y no permite maquinas virtuales ni hipervisores activos en PC. El launcher/anticheat impide ejecutar en la mayoria de VM y el intento repetido puede derivar en restricciones de cuenta. Vanguard (kernel-level) esta deshabilitado en VM."
+    },
+    "vmReportada": "documentada",
+    "necesitaGpu": true,
+    "nota": "Este perfil existe para registrar la limitacion. gaming.channel/instalador lo marcan como NO JUGABLE en VM y el bootstrap no configura controles para el."
+  },
+  "rendimiento": {
+    "preset": "equilibrado",
+    "fpsObjetivo": 60,
+    "fpsCap": null,
+    "resolucion": null,
+    "ajustes": [],
+    "parametrosLanzamiento": []
+  },
+  "canales": {
+    "rdp": {
+      "recomendado": false,
+      "nota": "n/a"
+    },
+    "moonlight": {
+      "recomendado": false,
+      "nota": "n/a"
+    }
+  },
+  "controles": {
+    "nativo": [
+      "teclado",
+      "raton",
+      "mando"
+    ],
+    "mando": {
+      "soportado": true,
+      "tipo": "xinput"
+    },
+    "sensibilidad": {
+      "raton": 1.0,
+      "mouseSensitivity": 10,
+      "aceleracion": false
+    },
+    "mapeoTactil": {
+      "modo": "ninguno",
+      "nota": "No se entrega layout: el juego no arrancara en la VM, y prometer lo contrario seria mentir."
+    },
+    "teclas": [],
+    "atajos": [],
+    "indicadores": []
+  },
+  "aplicacion": {
+    "host": [
+      "registro-de-ajustes"
+    ],
+    "cliente": [],
+    "pasosManuales": [
+      "Alternativas reales para jugar a Fortnite desde un movil: el servicio de cloud gaming de Epic (Xbox Cloud / GeForce NOW), no este proyecto.",
+      "Si vas a instalar el launcher igualmente para otros titulos, recuerda que 'juegos compatibles con VM' es la regla para elegir biblioteca."
+    ]
+  }
+}

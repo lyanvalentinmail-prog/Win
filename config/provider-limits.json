@@ -1,0 +1,247 @@
+{
+  "$schema": "./provider-limits.schema.json",
+  "schemaVersion": "1.0",
+  "fuente": {
+    "nota": "Limites reales declarados por cada proveedor. Snapshot verificado el 2026-10-18. Refrescar con 'make limits' (usa az / aws CLI) antes de un despliegue si el snapshot tiene >180 dias.",
+    "azure": "https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/gpu-accelerated/nvadsa10v5-series",
+    "aws": "https://aws.amazon.com/ec2/instance-types/g4/ y https://aws.amazon.com/ec2/instance-types/g5/",
+    "disk": "https://learn.microsoft.com/en-us/azure/virtual-machines/disks-types"
+  },
+  "providers": {
+    "azure": {
+      "vcpuCuotaDefecto": 20,
+      "notaCuota": "Las series NV suelen tener cuota regional por defecto de 0-50 vCPU de GPUs. Validar con: az account list-locations + az vm list-usage -l <region> --query \"[?contains(name.value,'NV')]\"",
+      "osImagenes": {
+        "windows-server-2025-desktop": {
+          "publisher": "MicrosoftWindowsServer",
+          "offer": "WindowsServer",
+          "sku": "2025-datacenter-azure-edition",
+          "licencia": "incluida-en-el-precio-de-la-VM",
+          "hipervGen": 2,
+          "winget": true
+        },
+        "windows-server-2022-desktop": {
+          "publisher": "MicrosoftWindowsServer",
+          "offer": "WindowsServer",
+          "sku": "2022-datacenter-azure-edition",
+          "licencia": "incluida-en-el-precio-de-la-VM",
+          "hipervGen": 2,
+          "winget": false
+        },
+        "windows-11-pro": {
+          "publisher": "MicrosoftWindowsDesktop",
+          "offer": "windows-11",
+          "sku": "win11-25h2-pro",
+          "licencia": "imagen de marketplace con licencia incluida; comprobar términos de despliegue y usar solo 1 usuario a la vez",
+          "hipervGen": 2,
+          "winget": true,
+          "requiereTrustedLaunch": true
+        },
+        "windows-11-enterprise": {
+          "publisher": "MicrosoftWindowsDesktop",
+          "offer": "windows-11",
+          "sku": "win11-25h2-ent",
+          "licencia": "imagen de marketplace; requiere suscripción E3/E5 valida o licencia incluida de la imagen",
+          "hipervGen": 2,
+          "winget": true,
+          "requiereTrustedLaunch": true
+        },
+        "windows-10-enterprise-multi-session": {
+          "publisher": "MicrosoftWindowsDesktop",
+          "offer": "windows-10",
+          "sku": "10-enterprise-multiple-session",
+          "licencia": "AVD/Multi-Session: requiere licencias por usuario (M365 A3+/AVD). No vale para un usuario unico 'gratis'",
+          "hipervGen": 2,
+          "winget": true
+        }
+      },
+      "sizes": [
+        {
+          "id": "Standard_NV6ads_A10_v5",
+          "vcpus": 6,
+          "ramGiB": 55,
+          "tempDiskGiB": 180,
+          "gpus": "1/6 NVIDIA A10",
+          "vramGiB": 4,
+          "maxDataDisks": 4,
+          "nics": 2,
+          "redMbps": 5000,
+          "gpu": true,
+          "gridLicenseIncluida": true
+        },
+        {
+          "id": "Standard_NV12ads_A10_v5",
+          "vcpus": 12,
+          "ramGiB": 110,
+          "tempDiskGiB": 360,
+          "gpus": "1/3 NVIDIA A10",
+          "vramGiB": 8,
+          "maxDataDisks": 4,
+          "nics": 2,
+          "redMbps": 10000,
+          "gpu": true,
+          "gridLicenseIncluida": true
+        },
+        {
+          "id": "Standard_NV18ads_A10_v5",
+          "vcpus": 18,
+          "ramGiB": 220,
+          "tempDiskGiB": 720,
+          "gpus": "1/2 NVIDIA A10",
+          "vramGiB": 12,
+          "maxDataDisks": 8,
+          "nics": 4,
+          "redMbps": 20000,
+          "gpu": true,
+          "gridLicenseIncluida": true
+        },
+        {
+          "id": "Standard_NV36ads_A10_v5",
+          "vcpus": 36,
+          "ramGiB": 440,
+          "tempDiskGiB": 1440,
+          "gpus": "1 NVIDIA A10",
+          "vramGiB": 24,
+          "maxDataDisks": 16,
+          "nics": 4,
+          "redMbps": 40000,
+          "gpu": true,
+          "gridLicenseIncluida": true
+        },
+        {
+          "id": "Standard_NV36adms_A10_v5",
+          "vcpus": 36,
+          "ramGiB": 880,
+          "tempDiskGiB": 2880,
+          "gpus": "1 NVIDIA A10",
+          "vramGiB": 24,
+          "maxDataDisks": 32,
+          "nics": 8,
+          "redMbps": 80000,
+          "gpu": true,
+          "gridLicenseIncluida": true
+        },
+        {
+          "id": "Standard_NV72ads_A10_v5",
+          "vcpus": 72,
+          "ramGiB": 880,
+          "tempDiskGiB": 2880,
+          "gpus": "2 NVIDIA A10",
+          "vramGiB": 48,
+          "maxDataDisks": 32,
+          "nics": 8,
+          "redMbps": 80000,
+          "gpu": true,
+          "gridLicenseIncluida": true
+        },
+        {
+          "id": "Standard_D4s_v5",
+          "vcpus": 4,
+          "ramGiB": 16,
+          "tempDiskGiB": 0,
+          "gpus": null,
+          "vramGiB": 0,
+          "maxDataDisks": 16,
+          "nics": 2,
+          "redMbps": 12500,
+          "gpu": false,
+          "nota": "Escritorio/productividad. Sin GPU: el canal de juego NO queda habilitado y el auditor lo informa."
+        },
+        {
+          "id": "Standard_D8s_v5",
+          "vcpus": 8,
+          "ramGiB": 32,
+          "tempDiskGiB": 0,
+          "gpus": null,
+          "vramGiB": 0,
+          "maxDataDisks": 16,
+          "nics": 4,
+          "redMbps": 12500,
+          "gpu": false,
+          "nota": "Escritorio/productividad. Sin GPU: el canal de juego NO queda habilitado."
+        },
+        {
+          "id": "Standard_D16s_v5",
+          "vcpus": 16,
+          "ramGiB": 64,
+          "tempDiskGiB": 0,
+          "gpus": null,
+          "vramGiB": 0,
+          "maxDataDisks": 32,
+          "nics": 8,
+          "redMbps": 12500,
+          "gpu": false,
+          "nota": "Escritorio/productividad. Sin GPU: el canal de juego NO queda habilitado."
+        }
+      ],
+      "discos": {
+        "StandardSSD": { "minGiB": 32, "maxGiB": 32767, "iopsBase": 500, "mbpsBase": 60, "nota": "500 IOPS + 60 MBps base; burst por créditos a partir de 1 TB" },
+        "PremiumSSD": { "minGiB": 64, "maxGiB": 32767, "iopsBase": 230, "mbpsBase": 125, "nota": "P4=64 GiB/230 IOPS .. P80=32 TiB; la relacion IOPS/GB cambia por nivel (P30=128 GiB/500 IOPS)" },
+        "PremiumSSDv2": { "minGiB": 128, "maxGiB": 65536, "iopsBase": 3000, "mbpsBase": 125, "nota": "Minimo real 128 GiB; IOPS/MBps se fijan al crear (3000 IOPS y 125 MBps gratis, despues se pagan)" },
+        "UltraDisk": { "minGiB": 4, "maxGiB": 65536, "iopsBase": 0, "mbpsBase": 0, "nota": "Rendimiento 1:1 por GiB; no soporta ser disco del sistema en muchas regiones" }
+      },
+      "notas": [
+        "Las GPU de la serie NVv4 (AMD) fueron retiradas el 2026-09-30; no usarlas en despliegues nuevos.",
+        "NVadsA10_v5 exige driver NVIDIA vGPU 18.x (o superior soportado) en el invitado; con drivers antiguos la GPU puede quedar en Code 43 tras la actualizacion del host.",
+        "El disco temporal (D: de Azure) NO es persistente: se pierde al deallocate. Por eso el proyecto crea un disco de datos gestionado y lo monta como D:."
+      ]
+    },
+
+    "aws": {
+      "vcpuCuotaDefecto": 0,
+      "notaCuota": "Las familias g4dn/g5 suelen tener cuota 0 en regiones nuevas: hay que solicitar aumento de vCPU 'G Instances' en Service Quotas.",
+      "osImagenes": {
+        "windows-server-2025-desktop": { "amiSuffix": "Windows_Server-2025-English-Full-Base", "licencia": "incluida en el precio de la instancia", "winget": true },
+        "windows-server-2022-desktop": { "amiSuffix": "Windows_Server-2022-English-Full-Base", "licencia": "incluida en el precio de la instancia", "winget": false },
+        "windows-11-pro": { "licencia": "NO disponible en hardware compartido: Windows de escritorio exige licencia BYOL en Dedicated Hosts/Instances (min. 4 vCPU por asignación). Este proyecto no automatiza ese escenario.", "winget": true, "bloqueado": true }
+      },
+      "sizes": [
+        { "id": "g4dn.xlarge", "vcpus": 4, "ramGiB": 16, "tempDiskGiB": 125, "gpus": "1 NVIDIA T4", "vramGiB": 16, "maxDataDisks": 25, "nics": 2, "redMbps": 25000, "gpu": true, "nota": "T4 soporta NVENC; no tiene salida de video fisica (correcto para streaming)" },
+        { "id": "g4dn.2xlarge", "vcpus": 8, "ramGiB": 32, "tempDiskGiB": 225, "gpus": "1 NVIDIA T4", "vramGiB": 16, "maxDataDisks": 25, "nics": 1, "redMbps": 25000, "gpu": true },
+        { "id": "g4dn.4xlarge", "vcpus": 16, "ramGiB": 64, "tempDiskGiB": 225, "gpus": "1 NVIDIA T4", "vramGiB": 16, "maxDataDisks": 25, "nics": 1, "redMbps": 25000, "gpu": true },
+        { "id": "g5.xlarge", "vcpus": 4, "ramGiB": 16, "tempDiskGiB": 250, "gpus": "1 NVIDIA A10G", "vramGiB": 24, "maxDataDisks": 25, "nics": 1, "redMbps": 10000, "gpu": true },
+        { "id": "g5.2xlarge", "vcpus": 8, "ramGiB": 32, "tempDiskGiB": 450, "gpus": "1 NVIDIA A10G", "vramGiB": 24, "maxDataDisks": 25, "nics": 1, "redMbps": 25000, "gpu": true },
+        { "id": "g5.4xlarge", "vcpus": 16, "ramGiB": 64, "tempDiskGiB": 600, "gpus": "1 NVIDIA A10G", "vramGiB": 24, "maxDataDisks": 25, "nics": 1, "redMbps": 25000, "gpu": true },
+        { "id": "m6i.xlarge", "vcpus": 4, "ramGiB": 16, "tempDiskGiB": 0, "gpus": null, "vramGiB": 0, "maxDataDisks": 25, "nics": 2, "redMbps": 12500, "gpu": false, "nota": "Sin GPU: no habilita el canal de juego" },
+        { "id": "m6i.2xlarge", "vcpus": 8, "ramGiB": 32, "tempDiskGiB": 0, "gpus": null, "vramGiB": 0, "maxDataDisks": 25, "nics": 2, "redMbps": 12500, "gpu": false }
+      ],
+      "discos": {
+        "gp3": { "minGiB": 1, "maxGiB": 16384, "iopsBase": 3000, "mbpsBase": 125, "nota": "80 GiB+ soporta subir IOPS/MBps pagando; 512 GiB y por encima puede pedir 12000/500" },
+        "io2": { "minGiB": 4, "maxGiB": 65536, "iopsBase": 100, "mbpsBase": 1000, "nota": "IOPS provisionados por GB (max 256000); caro para volúmenes pequeños" },
+        "StandardSSD": { "minGiB": 1, "maxGiB": 16384, "iopsBase": 500, "mbpsBase": 60, "nota": "Equivalente gp2 usado solo para pruebas" }
+      },
+      "notas": [
+        "El driver NVIDIA en Windows Server de AWS es un 'Tesla/Data Center driver'; en g4dn/g5 no hay licencia GRID para 3D remoto con vGPU, pero el WDDM del driver de datos permite DirectX 11/12 y NVENC en una sesion de consola/RDP con el modo de pantalla correcto.",
+        "EBS es persistente entre paradas; el NVMe local (instance store) NO lo es.",
+        "El trafico de salida (egress) se factura aparte: 1080p60 a 25 Mbps consume ~11 GiB por hora jugada."
+      ]
+    },
+
+    "libvirt": {
+      "vcpuCuotaDefecto": null,
+      "notaCuota": "Sin cuotas de proveedor: el limite es tu hardware. El script de despliegue comprueba core RAM libres, espacio en disco y IOMMU antes de crear la VM.",
+      "osImagenes": {
+        "windows-11-pro": { "licencia": "BYOL: necesitas una licencia Windows 11 Pro valida y tus propios medios de instalacion (ISO de Microsoft). Este repositorio no distribuye ISO ni licencias.", "winget": true },
+        "windows-11-enterprise": { "licencia": "BYOL (Eval Center de Microsoft para evaluacion, caduca a los 90 dias)", "winget": true },
+        "windows-server-2025-desktop": { "licencia": "BYOL / ISO de evaluacion de 180 dias", "winget": true },
+        "custom": { "licencia": "Imagen propia del usuario", "winget": true }
+      },
+      "sizes": [
+        {
+          "id": "host:custom",
+          "vcpus": null, "ramGiB": null, "tempDiskGiB": null, "gpus": null, "vramGiB": null,
+          "maxDataDisks": 8, "nics": 4, "redMbps": null, "gpu": null,
+          "nota": "vcpus/ramGiB/osDiskGiB/dataDiskGiB se validan contra el host (nproc, MemAvailable, espacio libre en el pool). gpu.mode=passthrough requiere IOMMU activo y la GPU separada del host."
+        }
+      ],
+      "discos": {
+        "qcow2": { "minGiB": 32, "maxGiB": 4096, "iopsBase": 0, "mbpsBase": 0, "nota": "thin provisioning; L2ARC/cache=none+io=native para evitar doble cache" }
+      },
+      "notas": [
+        "Requisitos reales para gaming con GPU: IOMMU (Intel VT-d / AMD-Vi) activo en BIOS+kernel, GPU dedicada al guest (passthrough) y un driver virtual no necesario.",
+        "Sin GPU dedicada, la VM usa el driver video 'virtio-gpu' con aceleracion 2D/3D limitada por Venus (experimental): el auditor lo detecta y NO habilita el canal de juego.",
+        "Hyper-V en el host impide anidar KVM con buen rendimiento: el script avisa si /sys/hypervisor/type = microsoft."
+      ]
+    }
+  }
+}

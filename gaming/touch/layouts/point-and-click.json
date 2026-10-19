@@ -1,0 +1,101 @@
+{
+  "$schema": "../touch-layout.schema.json",
+  "schemaVersion": "1.0",
+  "id": "point-and-click",
+  "orientacion": "horizontal",
+  "rejilla": {
+    "columnas": 12,
+    "filas": 6
+  },
+  "nombre": "Gestion / point & click (toque absoluto)",
+  "descripcion": "Granja, construccion, RPG por turnos, administracion: el dedo toca donde quiere pulsar, como en una pantalla tactil nativa.",
+  "destino": "teclado-raton",
+  "elementos": [
+    {
+      "tipo": "zona-toque",
+      "id": "superficie",
+      "x": 0.5,
+      "y": 0.5,
+      "tamano": 0.2,
+      "opacidad": 0,
+      "asignación": {
+        "tipo": "raton",
+        "valor": "izquierda"
+      },
+      "ancho": 1.0,
+      "alto": 0.86,
+      "etiqueta": "",
+      "modo": "pulsacion",
+      "nota": "Toque = clic izquierdo absoluto; mantener y arrastrar = seleccion."
+    },
+    {
+      "tipo": "boton",
+      "id": "clic-der",
+      "x": 0.93,
+      "y": 0.9,
+      "tamano": 0.085,
+      "opacidad": 45,
+      "asignación": {
+        "tipo": "raton",
+        "valor": "derecha"
+      },
+      "etiqueta": "R"
+    },
+    {
+      "tipo": "boton",
+      "id": "interactuar",
+      "x": 0.07,
+      "y": 0.9,
+      "tamano": 0.085,
+      "opacidad": 45,
+      "asignación": {
+        "tipo": "tecla",
+        "valor": "enter"
+      },
+      "etiqueta": "OK"
+    },
+    {
+      "tipo": "boton",
+      "id": "rueda-arriba",
+      "x": 0.93,
+      "y": 0.7,
+      "tamano": 0.065,
+      "opacidad": 35,
+      "asignación": {
+        "tipo": "raton",
+        "valor": "rueda-arriba"
+      },
+      "etiqueta": "+"
+    },
+    {
+      "tipo": "boton",
+      "id": "rueda-abajo",
+      "x": 0.93,
+      "y": 0.79,
+      "tamano": 0.065,
+      "opacidad": 35,
+      "asignación": {
+        "tipo": "raton",
+        "valor": "rueda-abajo"
+      },
+      "etiqueta": "-"
+    },
+    {
+      "tipo": "boton",
+      "id": "pausa",
+      "x": 0.5,
+      "y": 0.94,
+      "tamano": 0.07,
+      "opacidad": 35,
+      "asignación": {
+        "tipo": "tecla",
+        "valor": "esc"
+      },
+      "etiqueta": "ESC"
+    }
+  ],
+  "limitaciones": [
+    "El toque absoluto depende de que el cliente este en modo 'Direct touch' (Windows App) o de la emulacion de raton absoluto; en modo trackpad el puntero es relativo.",
+    "No apto para juegos que exijan ver el cursor: en 'Direct touch' el puntero no se ve."
+  ]
+}

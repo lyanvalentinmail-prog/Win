@@ -1,0 +1,129 @@
+{
+  "$schema": "../touch-layout.schema.json",
+  "schemaVersion": "1.0",
+  "id": "shooter-competitivo",
+  "orientacion": "horizontal",
+  "rejilla": {
+    "columnas": 12,
+    "filas": 6
+  },
+  "nombre": "Shooter competitivo (ADVERTENCIA: usar mando fisico)",
+  "descripcion": "Layout de emergencia: solo para probar o jugar a titulos lentos. La punteria con stick/touchpad virtual no compite con raton o mando fisico.",
+  "destino": "mando-virtual",
+  "elementos": [
+    {
+      "tipo": "joystick",
+      "id": "stick-mover",
+      "x": 0.12,
+      "y": 0.66,
+      "tamano": 0.24,
+      "opacidad": 40,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "stick-izq"
+      },
+      "etiqueta": ""
+    },
+    {
+      "tipo": "zona-toque",
+      "id": "punteria",
+      "x": 0.72,
+      "y": 0.5,
+      "tamano": 0.14,
+      "opacidad": 0,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "stick-der"
+      },
+      "ancho": 0.42,
+      "alto": 0.7,
+      "etiqueta": "",
+      "sensibilidad": 1.6,
+      "nota": "Trackpad -> stick derecho. Subir sensibilidad solo si el juego lo permite."
+    },
+    {
+      "tipo": "gatillo",
+      "id": "disparar",
+      "x": 0.8,
+      "y": 0.16,
+      "tamano": 0.13,
+      "opacidad": 55,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "rt"
+      },
+      "etiqueta": "FIRE",
+      "modo": "mantener"
+    },
+    {
+      "tipo": "boton",
+      "id": "apuntar",
+      "x": 0.62,
+      "y": 0.16,
+      "tamano": 0.11,
+      "opacidad": 50,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "lt"
+      },
+      "etiqueta": "AIM"
+    },
+    {
+      "tipo": "boton",
+      "id": "recargar",
+      "x": 0.9,
+      "y": 0.72,
+      "tamano": 0.085,
+      "opacidad": 45,
+      "asignación": {
+        "tipo": "tecla",
+        "valor": "r"
+      },
+      "etiqueta": "R"
+    },
+    {
+      "tipo": "boton",
+      "id": "saltar",
+      "x": 0.94,
+      "y": 0.55,
+      "tamano": 0.085,
+      "opacidad": 45,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "a"
+      },
+      "etiqueta": "SPC"
+    },
+    {
+      "tipo": "boton",
+      "id": "agachar",
+      "x": 0.94,
+      "y": 0.38,
+      "tamano": 0.075,
+      "opacidad": 40,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "b"
+      },
+      "etiqueta": "CTRL"
+    },
+    {
+      "tipo": "boton",
+      "id": "menu",
+      "x": 0.5,
+      "y": 0.07,
+      "tamano": 0.06,
+      "opacidad": 30,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "guide"
+      },
+      "etiqueta": "MENU"
+    }
+  ],
+  "limitaciones": [
+    "Juegos con anticheat de kernel (Vanguard, EAC) pueden rechazar la VM: ver gaming/antitrampas.md.",
+    "Sin raton real no hay 'flicks' ni 'tracking' fiables: la sensacion no es la de un PC.",
+    "En RDP (Windows App) no existe este overlay: solo funciona en el canal Moonlight."
+  ]
+}

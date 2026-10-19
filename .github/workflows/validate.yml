@@ -1,0 +1,130 @@
+name: validate
+
+# Todo lo que se puede comprobar SIN una VM (config, JSON schemas, catalogo, perfiles,
+# sintaxis de los .ps1, secretos, enlaces). Es la puerta de entrada de cada PR.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repo:
+    name: Validar repo (config, apps, gaming, PowerShell, secretos)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Instalar dependencias del validador
+        run: python -m pip install -r scripts/validate/requirements.txt
+
+      - name: Validar
+        run: python scripts/validate/validate.py --verbose
+
+      - name: Pruebas del validador y de los datos
+        run: python -m pytest -q
+
+      - name: Los JSON se parsean (comprobacion independiente del validador)
+        run: |
+          shopt -s nullglob
+          for f in config/*.json apps/*.json apps/sources.json apps/selections/*.json gaming/profiles/*.json gaming/touch/layouts/*.json; do
+            python -c "import json,sys; json.load(open(sys.argv[1], encoding='utf-8'))" "$f" && echo "OK $f"
+          done
+
+  powershell-analisis:
+    name: Analisis estatico de PowerShell (PSScriptAnalyzer)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          $settings = Join-Path $PWD 'scripts/validate/PSScriptAnalyzerSettings.psd1'
+          $hallazgos = @()
+          foreach ($f in Get-ChildItem scripts/win -Recurse -Include *.ps1,*.psm1,*.psd1) {
+            if (Test-Path $settings) { $hallazgos += Invoke-ScriptAnalyzer -Path $f.FullName -Settings $settings }
+            else { $hallazgos += Invoke-ScriptAnalyzer -Path $f.FullName }
+          }
+          $hallazgos | Format-Table -AutoSize Severity, RuleName, Line, ScriptPath | Out-String -Width 200 | Write-Host
+          if ($hallazgos | Where-Object Severity -eq 'Error') { throw 'PSScriptAnalyzer reporto errores' }
+
+  pwsh-sintaxis:
+    name: Parseo con PowerShell 7
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Parsing de todos los scripts
+        shell: pwsh
+        run: |
+          # Parseo REAL (no un chequeo lexico): el parser de PowerShell es el unico que
+          # puede decirnos que un .ps1 no se puede leer. Cada error se convierte en una
+          # anotacion del check para que se vea en la pestailla "Files changed".
+          $total = 0
+          foreach ($f in Get-ChildItem scripts -Recurse -Include *.ps1,*.psm1,*.psd1) {
+            $tokens = $null; $fallos = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$tokens, [ref]$fallos)
+            $rel = $f.FullName.Replace(($PWD.Path.TrimEnd('\', '/') + '/'), '')
+            if (-not $fallos -or $fallos.Count -eq 0) { Write-Host "OK $rel"; continue }
+            foreach ($e in $fallos) {
+              $total++
+              $linea = $e.Extent.StartLineNumber
+              Write-Host "::error file=$rel,line=$linea::$($e.Message)"
+              Write-Host ("  {0}:{1}: {2}" -f $rel, $linea, $e.Message) -ForegroundColor Red
+            }
+          }
+          if ($total -gt 0) " throw "$total errores de sintaxis en los scripts" "}
+      - name: Compilacion de los scripts (no solo parseo)
+        shell: pwsh
+        run: |
+          # El parser acepta cosas que el compilador de PowerShell 7 no: un if/else cuyas ramas
+          # devuelven tipos distintos se traduce a un Expression.Condition y revienta AL COMPILAR
+          # con 'Argument types do not match'. Solo se ve ejecutando, y en el job de Windows cada
+          # intento cuesta ocho minutos; [ScriptBlock]::Create fuerza la compilacion del texto sin
+          # ejecutarlo, asi que este check (ubuntu, segundos) lo caza y lo anota en el check run.
+          $rotos = 0
+          foreach ($f in Get-ChildItem scripts -Recurse -Include *.ps1,*.psm1) {
+            $rel = $f.FullName.Substring($PWD.Path.Length + 1)
+            $texto = Get-Content -LiteralPath $f.FullName -Raw
+            try {
+              [void][ScriptBlock]::Create($texto)
+              Write-Host "OK $rel"
+            } catch {
+              $rotos++
+              $ex = $_.Exception
+              while ($ex.InnerException) { $ex = $ex.InnerException }
+              Write-Host "::error file=$rel::$($ex.GetType().Name): $($ex.Message)"
+              # El compilador no siempre dice donde: se recompila statement por statement (solo
+              # los de primer nivel, que son sintacticamente completos) para poder anotar linea.
+              $tok = $null; $perr = $null
+              $arbol = [System.Management.Automation.Language.Parser]::ParseInput($texto, [ref]$tok, [ref]$perr)
+              foreach ($sent in $arbol.EndBlock.Statements) {
+                try { [void][ScriptBlock]::Create($sent.Extent.Text) } catch {
+                  Write-Host ("::error file=$rel,line=" + $sent.Extent.StartLineNumber + "::aqui se rompe la compilacion: " + ($sent.Extent.Text -split "`n")[0])
+                  break
+                }
+              }
+            }
+          }
+          if ($rotos -gt 0) {
+            throw "$rotos scripts no compilan bajo PowerShell 7"
+          }
+      - name: Enlaces internos de la documentacion
+        run: python scripts/validate/check_links.py

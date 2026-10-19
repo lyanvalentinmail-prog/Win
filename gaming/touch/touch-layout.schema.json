@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/lyanvalentinmail-prog/Win/gaming/touch/touch-layout.schema.json",
+  "title": "Layout de controles tactiles (especificacion para el cliente)",
+  "description": "Especificacion normalizada del layout que hay que reproducir en el cliente de streaming (Moonlight Android/iOS: Ajustes > Controles en pantalla > mover/redimensionar/opacidad). NO es un fichero que Moonlight importe: Moonlight guarda su layout en los ajustes privados de la app y no expone importacion. Este JSON es la fuente de verdad compartida entre el perfil del juego, la documentacion y la tarjeta imprimible que genera Set-TouchControls.ps1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "nombre",
+    "destino",
+    "elementos"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "$schema": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{1,40}$"
+    },
+    "nombre": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 60
+    },
+    "descripcion": {
+      "type": "string",
+      "maxLength": 400
+    },
+    "destino": {
+      "enum": [
+        "mando-virtual",
+        "teclado-raton",
+        "mixto"
+      ],
+      "description": "mando-virtual = el cliente emula un Xbox 360 controller (lo que espera un juego con soporte de mando). teclado-raton = el cliente envia teclas/movimiento de raton (juegos sin soporte de mando)."
+    },
+    "orientacion": {
+      "enum": [
+        "horizontal",
+        "vertical"
+      ],
+      "default": "horizontal"
+    },
+    "rejilla": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "columnas": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 24,
+          "default": 12
+        },
+        "filas": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12,
+          "default": 6
+        }
+      }
+    },
+    "elementos": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 24,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tipo",
+          "id",
+          "x",
+          "y",
+          "tamano",
+          "opacidad",
+          "asignación"
+        ],
+        "properties": {
+          "tipo": {
+            "enum": [
+              "joystick",
+              "boton",
+              "gatillo",
+              "pad-digital",
+              "zona-toque"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{1,32}$"
+          },
+          "etiqueta": {
+            "type": "string",
+            "maxLength": 12
+          },
+          "x": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Centro en X, 0 = borde izquierdo, 1 = borde derecho"
+          },
+          "y": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "ancho": {
+            "type": "number",
+            "minimum": 0.02,
+            "maximum": 1,
+            "description": "Solo para zona-toque/gatillo: ancho relativo a la pantalla."
+          },
+          "alto": {
+            "type": "number",
+            "minimum": 0.02,
+            "maximum": 1
+          },
+          "tamano": {
+            "type": "number",
+            "minimum": 0.03,
+            "maximum": 0.6,
+            "description": "Diametro/lado relativo a la pantalla (0,03-0,60)."
+          },
+          "opacidad": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "0 = invisible (memoria muscular), 100 = solido."
+          },
+          "modo": {
+            "enum": [
+              "mantener",
+              "pulsacion",
+              "alternar",
+              "arrastrar"
+            ],
+            "default": "pulsacion"
+          },
+          "asignación": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "tipo",
+              "valor"
+            ],
+            "properties": {
+              "tipo": {
+                "enum": [
+                  "gamepad",
+                  "tecla",
+                  "raton",
+                  "macro"
+                ]
+              },
+              "valor": {
+                "type": "string",
+                "description": "gamepad: a|b|x|y|lb|rb|lt|rt|start|back|guide|stick-izq|stick-der|dpad-arriba... | tecla: nombre Windows (w, space, esc) | raton: izquierda|derecha|central|rueda-arriba | macro: secuencia 'ctrl+alt+f12'"
+              },
+              "zonaMuerta": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 0.5
+              },
+              "sensibilidad": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 5
+              }
+            }
+          },
+          "nota": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "sensibilidad": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 5,
+            "description": "Factor extra del gesto (arrastrar para apuntar)."
+          },
+          "zonaMuerta": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 0.5
+          }
+        }
+      }
+    },
+    "limitaciones": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "string"
+      },
+      "description": "Advertencias que el perfil muestra en la tarjeta del usuario (p.ej. 'sin multitouch real para 4 dedos')."
+    }
+  }
+}

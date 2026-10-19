@@ -1,0 +1,552 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/lyanvalentinmail-prog/Win/gaming/schemas/gaming-profile.schema.json",
+  "title": "Perfil de juego (controles + rendimiento)",
+  "description": "Perfil leido por scripts/win/Set-TouchControls.ps1 y Test-GamingReadiness.ps1. Documenta QUE se puede aplicar desde el host y QUE requiere accion en el cliente: el campo 'aplicacion' lo hace explícito para no prometer automatizaciones inexistentes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "nombre",
+    "juego",
+    "requisitos",
+    "compatibilidadVm",
+    "controles",
+    "aplicacion"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "$schema": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{1,40}$"
+    },
+    "nombre": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 80
+    },
+    "juego": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tienda",
+        "procesos"
+      ],
+      "properties": {
+        "tienda": {
+          "enum": [
+            "steam",
+            "epic",
+            "minecraft",
+            "gog",
+            "pc-game-pass",
+            "otro"
+          ]
+        },
+        "launcher": {
+          "type": "string"
+        },
+        "appId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Steam AppId si procede (para -applaunch y para localizar el juego)."
+        },
+        "procesos": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_. -]{1,64}(\\.exe)?$"
+          }
+        },
+        "urlFicha": {
+          "type": "string",
+          "pattern": "^https://"
+        }
+      }
+    },
+    "requisitos": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fuente",
+        "ramGiB",
+        "vramGiB"
+      ],
+      "properties": {
+        "fuente": {
+          "type": "string",
+          "pattern": "^https://",
+          "description": "Obligatorio: la pagina oficial con los requisitos minimos. El validador del repo exige que el host sea la tienda/fabricante."
+        },
+        "vcpu": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32
+        },
+        "ramGiB": {
+          "type": "number",
+          "minimum": 0
+        },
+        "vramGiB": {
+          "type": "number",
+          "minimum": 0
+        },
+        "almacenamientoGiB": {
+          "type": "number",
+          "minimum": 0
+        },
+        "apiGrafica": {
+          "type": "string"
+        },
+        "nota": {
+          "type": "string",
+          "maxLength": 400
+        }
+      }
+    },
+    "compatibilidadVm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "antitrampas",
+        "vmReportada"
+      ],
+      "properties": {
+        "antitrampas": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sistemas",
+            "vm"
+          ],
+          "properties": {
+            "sistemas": {
+              "type": "array",
+              "maxItems": 6,
+              "items": {
+                "enum": [
+                  "ninguno",
+                  "EAC",
+                  "BattlEye",
+                  "Vanguard",
+                  "GPP",
+                  "EasyAntiCheat-Lite",
+                  "propio"
+                ]
+              }
+            },
+            "vm": {
+              "enum": [
+                "permitida",
+                "restringida",
+                "desconocida"
+              ],
+              "description": "'permitida' = documentado por el fabricante o verificado por la comunidad sin baneos por el hecho de usar VM. 'restringida' = rechaza VM o kernel drivers en VM. 'desconocida' = no hay evidencia; el auditor lo repite al usuario."
+            },
+            "riesgoBaneo": {
+              "enum": [
+                "bajo",
+                "medio",
+                "alto",
+                "no-aplicable"
+              ]
+            },
+            "nota": {
+              "type": "string",
+              "maxLength": 500
+            }
+          }
+        },
+        "vmReportada": {
+          "enum": [
+            "documentada",
+            "verificada-por-el-autor",
+            "no-verificada"
+          ],
+          "description": "Cual es la fuente de que el juego corre en VM. Nada aqui debe leerse como garantia."
+        },
+        "necesitaGpu": {
+          "type": "boolean",
+          "default": true
+        },
+        "nota": {
+          "type": "string",
+          "maxLength": 500
+        }
+      }
+    },
+    "rendimiento": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "preset": {
+          "enum": [
+            "compatibilidad",
+            "equilibrado",
+            "calidad",
+            "competitivo"
+          ]
+        },
+        "fpsObjetivo": {
+          "type": "integer",
+          "minimum": 24,
+          "maximum": 240
+        },
+        "fpsCap": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 24,
+          "maximum": 240,
+          "description": "Limitar fps reduce la variabilidad del bitrate y el calor: util en stream."
+        },
+        "resolucion": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "null = la resolucion de la sesion."
+        },
+        "ajustes": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "clave",
+              "valor",
+              "efecto"
+            ],
+            "properties": {
+              "clave": {
+                "type": "string"
+              },
+              "valor": {
+                "type": "string"
+              },
+              "efecto": {
+                "type": "string"
+              },
+              "donde": {
+                "enum": [
+                  "archivo-de-configuracion-del-juego",
+                  "lanzar-con-parametros",
+                  "dentro-del-juego"
+                ]
+              },
+              "automatizable": {
+                "type": "boolean",
+                "default": false
+              }
+            }
+          }
+        },
+        "parametrosLanzamiento": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "canales": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "rdp": {
+          "$ref": "#/$defs/canal"
+        },
+        "moonlight": {
+          "$ref": "#/$defs/canal"
+        }
+      }
+    },
+    "controles": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "nativo",
+        "sensibilidad"
+      ],
+      "properties": {
+        "nativo": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "teclado",
+              "raton",
+              "mando",
+              "touch"
+            ]
+          }
+        },
+        "mando": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "soportado": {
+              "type": "boolean"
+            },
+            "tipo": {
+              "enum": [
+                "xinput",
+                "directinput",
+                "rawinput",
+                "ninguno"
+              ]
+            },
+            "nota": {
+              "type": "string",
+              "maxLength": 300
+            }
+          }
+        },
+        "sensibilidad": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "raton": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 4,
+              "description": "Multiplicador sobre la sensibilidad base del host."
+            },
+            "mouseSensitivity": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20,
+              "description": "Valor directo de HKCU\\Control Panel\\Mouse\\MouseSensitivity."
+            },
+            "aceleracion": {
+              "type": "boolean",
+              "default": false,
+              "description": "false = desactiva 'Mejorar precisión del puntero' (MouseThreshold*=0, SmoothMouseX=0)."
+            },
+            "inversionEjeY": {
+              "type": "boolean",
+              "default": false,
+              "description": "No aplicable desde el host: es ajuste del juego/cliente."
+            }
+          }
+        },
+        "mapeoTactil": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "modo"
+          ],
+          "properties": {
+            "modo": {
+              "enum": [
+                "mando-virtual",
+                "teclado-virtual",
+                "trackpad-raton",
+                "ninguno"
+              ]
+            },
+            "layout": {
+              "type": "string",
+              "description": "Ruta relativa al perfil (p.ej. ../touch/layouts/sandbox-fps.json) del layout a reproducir en el cliente."
+            },
+            "nota": {
+              "type": "string",
+              "maxLength": 400
+            }
+          }
+        },
+        "teclas": {
+          "type": "array",
+          "maxItems": 40,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "original",
+              "nuevo"
+            ],
+            "properties": {
+              "original": {
+                "type": "string",
+                "description": "Tecla o boton de mando que pulsas (p.ej. 'gamepad-a', 'f13', 'mouse-middle')."
+              },
+              "nuevo": {
+                "type": "string",
+                "description": "Lo que debe recibir el juego (p.ej. 'space', 'w', 'e')."
+              },
+              "motivo": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "atajos": {
+          "type": "array",
+          "maxItems": 12,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "nombre",
+              "teclas",
+              "via"
+            ],
+            "properties": {
+              "nombre": {
+                "enum": [
+                  "pausa",
+                  "salir-del-juego",
+                  "abrir-menu",
+                  "chat",
+                  "inventario",
+                  "mapa",
+                  "captura",
+                  "micrófono",
+                  "otro"
+                ]
+              },
+              "teclas": {
+                "type": "string"
+              },
+              "via": {
+                "enum": [
+                  "juego",
+                  "cliente-moonlight",
+                  "powertoys-keyboard-manager",
+                  "windows",
+                  "vapor-overlay"
+                ]
+              },
+              "nota": {
+                "type": "string",
+                "maxLength": 240
+              }
+            }
+          }
+        },
+        "indicadores": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "nombre",
+              "origen"
+            ],
+            "properties": {
+              "nombre": {
+                "enum": [
+                  "latencia",
+                  "fps",
+                  "paquetes-perdidos",
+                  "bitrate",
+                  "temperatura-cpu",
+                  "uso-gpu",
+                  "reloj-de-servidor"
+                ]
+              },
+              "origen": {
+                "enum": [
+                  "cliente-moonlight",
+                  "sunshine",
+                  "contador-de-rendimiento-windows",
+                  "task-manager"
+                ]
+              },
+              "activar": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "aplicacion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "host",
+        "cliente"
+      ],
+      "description": "Separa lo que el script puede dejar listo automaticamente de lo que exige tocar el dispositivo del usuario.",
+      "properties": {
+        "host": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "enum": [
+              "sensibilidad-raton",
+              "aceleracion-raton",
+              "fps-cap-via-config",
+              "remap-teclas-powertoys",
+              "carpeta-de-capturas",
+              "registro-de-ajustes"
+            ]
+          }
+        },
+        "cliente": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "enum": [
+              "layout-tactil",
+              "sensibilidad-trackpad",
+              "mostrar-estadisticas",
+              "teclado-especial",
+              "resolucion-stream",
+              "pairing-sunshine",
+              "mando-fisico"
+            ]
+          }
+        },
+        "pasosManuales": {
+          "type": "array",
+          "maxItems": 12,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "canal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recomendado",
+        "nota"
+      ],
+      "properties": {
+        "recomendado": {
+          "type": "boolean"
+        },
+        "fps": {
+          "type": "integer",
+          "minimum": 24,
+          "maximum": 240
+        },
+        "nota": {
+          "type": "string",
+          "maxLength": 400
+        }
+      }
+    }
+  }
+}

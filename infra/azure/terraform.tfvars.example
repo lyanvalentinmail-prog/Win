@@ -1,0 +1,22 @@
+# Copia a terraform.tfvars (ignorada por git) y completa.
+name              = "wingamingvm01"
+location          = "westeurope"
+vm_size           = "Standard_NV6ads_A10_v5"
+windows_edition   = "windows-server-2025-desktop"
+data_disk_gb      = 512
+data_disk_sku     = "Premium_LRS"
+
+# La contrasena NO va en este fichero si lo versionas: usa TF_VAR_vm_admin_password
+# o un fichero fuera del repositorio.
+# vm_admin_password = "..."
+
+# Recomendado: no abrir 3389 a Internet y entrar por tunel.
+rdp_allowed_cidrs  = []          # o ["203.0.113.10/32"] si de verdad necesitas el puerto
+enable_rdp_udp     = false
+enable_game_stream = false       # true solo con SKU NV + CIDR propias
+spot_priority      = false
+automatic_updates  = false
+tags = {
+  proyecto = "win-gaming-vm"
+  entorno  = "personal"
+}

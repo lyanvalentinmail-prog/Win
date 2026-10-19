@@ -1,0 +1,83 @@
+# --- Configuración local con datos reales (NUNCA subir) ---------------------
+config/vm.json
+config/*.local.json
+config/tfvars/
+apps/selections/local.json
+
+# --- Terraform --------------------------------------------------------------
+**/.terraform/
+**/.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+infra/**/*.tfvars
+!infra/**/terraform.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*override.tf
+*override.tf.json
+.terraformrc
+terraform.rc
+
+# --- Credenciales y secretos -------------------------------------------------
+*.pem
+*.pfx
+*.key
+*.crt
+*.p12
+*.jks
+*.secretfile
+*.rdp
+*.rdg
+secrets/
+*.env
+.env
+*.tfvars
+id_rsa*
+*.ppk
+credentials.json
+gcloud.json
+AZURE_CONFIG_DIR/
+
+# --- Artefactos de build / ejecución ----------------------------------------
+dist/
+build/
+out/
+*.log
+*.zip
+*.sha256
+reports/
+logs/
+
+# --- payloads de cloud (puede contener tokens temporales) --------------------
+infra/**/cloud-init/*.generated.ps1
+scripts/deploy/*.inline.ps1
+
+# --- Python ------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# --- Node / editores / SO ----------------------------------------------------
+node_modules/
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# --- Terraform y artefactos de CI local -------------------------------------
+release-notes.md
+ps-lint.txt
+tf.plan
+*.tfplan
+terraform.tfstate.d/
