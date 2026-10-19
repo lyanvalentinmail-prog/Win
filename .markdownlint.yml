@@ -1,0 +1,8 @@
+# Config de markdownlint (CI `docs`).
+default: true
+MD013: false          # longitud de linea: las tablas comparativas necesitan lineas largas
+MD024: false          # titulos repetidos por seccion (p. ej. "Limites" en varios docs)
+MD029: false          # numeros de lista no consecutivos a proposito
+MD033: false          # <details>/<summary> HTML para el arbol del README
+MD036: false          # enfasis usado como subtitulo en bloque de notas
+MD041: false          # algunos fragmentos empiezan por bloque de cita

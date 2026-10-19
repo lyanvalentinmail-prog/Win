@@ -1,0 +1,172 @@
+{
+  "$schema": "../touch-layout.schema.json",
+  "schemaVersion": "1.0",
+  "id": "sandbox-fps",
+  "orientacion": "horizontal",
+  "rejilla": {
+    "columnas": 12,
+    "filas": 6
+  },
+  "nombre": "Mundo abierto / sandbox con construccion",
+  "descripcion": "Pensado para Minecraft, Terraria en 3D, Valheim y similares: mover, mirar, romper y colocar. Botones grandes en la zona de pulgar, zona de camara a la derecha.",
+  "destino": "mixto",
+  "elementos": [
+    {
+      "tipo": "joystick",
+      "id": "stick-mover",
+      "x": 0.13,
+      "y": 0.72,
+      "tamano": 0.26,
+      "opacidad": 35,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "stick-izq"
+      },
+      "etiqueta": "MOV",
+      "nota": "Zona muerta recomendada 0,10 en el cliente para evitar deriva."
+    },
+    {
+      "tipo": "zona-toque",
+      "id": "camara",
+      "x": 0.78,
+      "y": 0.45,
+      "tamano": 0.16,
+      "opacidad": 0,
+      "asignación": {
+        "tipo": "raton",
+        "valor": "relativo",
+        "sensibilidad": 1.2
+      },
+      "etiqueta": "",
+      "ancho": 0.36,
+      "alto": 0.62,
+      "nota": "Arrastrar = mover camara. Asignar a 'stick-der' si el juego solo acepta mando."
+    },
+    {
+      "tipo": "boton",
+      "id": "saltar",
+      "x": 0.66,
+      "y": 0.8,
+      "tamano": 0.105,
+      "opacidad": 40,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "a"
+      },
+      "etiqueta": "SALTAR"
+    },
+    {
+      "tipo": "boton",
+      "id": "romper",
+      "x": 0.87,
+      "y": 0.66,
+      "tamano": 0.115,
+      "opacidad": 50,
+      "asignación": {
+        "tipo": "raton",
+        "valor": "izquierda"
+      },
+      "etiqueta": "USAR",
+      "modo": "mantener",
+      "nota": "Mantener = minar continuo."
+    },
+    {
+      "tipo": "boton",
+      "id": "colocar",
+      "x": 0.88,
+      "y": 0.44,
+      "tamano": 0.095,
+      "opacidad": 40,
+      "asignación": {
+        "tipo": "raton",
+        "valor": "derecha"
+      },
+      "etiqueta": "PONER"
+    },
+    {
+      "tipo": "boton",
+      "id": "inventario",
+      "x": 0.3,
+      "y": 0.86,
+      "tamano": 0.085,
+      "opacidad": 35,
+      "asignación": {
+        "tipo": "tecla",
+        "valor": "e"
+      },
+      "etiqueta": "INV"
+    },
+    {
+      "tipo": "boton",
+      "id": "agachar",
+      "x": 0.2,
+      "y": 0.5,
+      "tamano": 0.075,
+      "opacidad": 30,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "lt"
+      },
+      "etiqueta": "BAJO",
+      "nota": "Shift/Aguantar para volar en creativo."
+    },
+    {
+      "tipo": "boton",
+      "id": "menu",
+      "x": 0.5,
+      "y": 0.1,
+      "tamano": 0.07,
+      "opacidad": 30,
+      "asignación": {
+        "tipo": "tecla",
+        "valor": "esc"
+      },
+      "etiqueta": "PAUSA",
+      "modo": "pulsacion"
+    },
+    {
+      "tipo": "boton",
+      "id": "hotbar-izq",
+      "x": 0.4,
+      "y": 0.13,
+      "tamano": 0.065,
+      "opacidad": 28,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "lb"
+      },
+      "etiqueta": "<"
+    },
+    {
+      "tipo": "boton",
+      "id": "hotbar-der",
+      "x": 0.58,
+      "y": 0.13,
+      "tamano": 0.065,
+      "opacidad": 28,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "rb"
+      },
+      "etiqueta": ">"
+    },
+    {
+      "tipo": "boton",
+      "id": "soltar",
+      "x": 0.5,
+      "y": 0.86,
+      "tamano": 0.075,
+      "opacidad": 30,
+      "asignación": {
+        "tipo": "tecla",
+        "valor": "q"
+      },
+      "etiqueta": "Q"
+    }
+  ],
+  "limitaciones": [
+    "Zona de camara = arrastre; no hay raton relativo real, la aceleracion la aplica el cliente.",
+    "Mantener 'USAR' y mover el dedo de camara a la vez exige multitouch de 3 dedos: algunos moviles lo recortan.",
+    "Si el juego pide bloquear el cursor (Minecraft en ventana), usa el modo 'Direct touch' o el mando virtual, no el puntero."
+  ]
+}

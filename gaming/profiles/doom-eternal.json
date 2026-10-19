@@ -1,0 +1,131 @@
+{
+  "$schema": "../schemas/gaming-profile.schema.json",
+  "schemaVersion": "1.0",
+  "id": "doom-eternal",
+  "nombre": "DOOM Eternal (referencia de limite realista)",
+  "juego": {
+    "tienda": "steam",
+    "launcher": "Steam",
+    "appId": "782330",
+    "procesos": [
+      "DoomEternal.exe"
+    ]
+  },
+  "requisitos": {
+    "fuente": "https://store.steampowered.com/app/782330/DOOM_Eternal/",
+    "vcpu": 6,
+    "ramGiB": 8,
+    "vramGiB": 4,
+    "almacenamientoGiB": 50,
+    "apiGrafica": "Vulkan",
+    "nota": "Requisito minimo real: 4 GiB de VRAM solo cubre texturas en 1080p/medios. En Standard_NV6ads_A10_v5 (4 GiB compartidos por el compositor) el preset 'calidad' no es viable: se quedara en 'equilibrado' con texturas medias."
+  },
+  "compatibilidadVm": {
+    "antitrampas": {
+      "sistemas": [
+        "propio"
+      ],
+      "vm": "desconocida",
+      "riesgoBaneo": "bajo",
+      "nota": "No incluye anticheat de kernel en el modo un jugador; el componente online de 'Snapmap' no usa EAC. Aun asi no hay garantia: verificar el estado del juego en gaming/antitrampas.md antes de instalar."
+    },
+    "vmReportada": "no-verificada",
+    "necesitaGpu": true,
+    "nota": "id Tech 7 puede negarse a arrancar si el driver no reporta las caracteristicas que espera (WDDM + DX12): comprobar con Test-GamingReadiness.ps1 -Juego DOOM."
+  },
+  "rendimiento": {
+    "preset": "equilibrado",
+    "fpsObjetivo": 60,
+    "fpsCap": 60,
+    "resolucion": "1920x1080@60",
+    "ajustes": [
+      {
+        "clave": "Profile",
+        "valor": "Medium",
+        "efecto": "Ajuste a 4 GiB de VRAM",
+        "donde": "dentro-del-juego",
+        "automatizable": false
+      },
+      {
+        "clave": "Ray Tracing",
+        "valor": "Off",
+        "efecto": "No hay RT util en una particion A10 de 4 GiB",
+        "donde": "dentro-del-juego",
+        "automatizable": false
+      },
+      {
+        "clave": "Vulkan",
+        "valor": "-vulkan",
+        "efecto": "Mejor compatibilidad con drivers vGPU",
+        "donde": "lanzar-con-parametros",
+        "automatizable": false
+      }
+    ],
+    "parametrosLanzamiento": [
+      "-vulkan",
+      "+r_customwidth 1920",
+      "+r_customheight 1080"
+    ]
+  },
+  "canales": {
+    "rdp": {
+      "recomendado": false,
+      "nota": "No recomendable: RDP anade demasiado retardo para un FPS de ritmo alto."
+    },
+    "moonlight": {
+      "recomendado": true,
+      "nota": "El unico canal viable; RTT objetivo < 30 ms."
+    }
+  },
+  "controles": {
+    "nativo": [
+      "teclado",
+      "raton",
+      "mando"
+    ],
+    "mando": {
+      "soportado": true,
+      "tipo": "xinput"
+    },
+    "sensibilidad": {
+      "raton": 1.2,
+      "mouseSensitivity": 9,
+      "aceleracion": false
+    },
+    "mapeoTactil": {
+      "modo": "mando-virtual",
+      "layout": "../touch/layouts/shooter-competitivo.json",
+      "nota": "Stick der = camara. En un movil la punteria con stick derecho es muy inferior a un mando fisico: documentalo antes de recomendarlo."
+    },
+    "teclas": [],
+    "atajos": [
+      {
+        "nombre": "pausa",
+        "teclas": "Esc",
+        "via": "juego"
+      }
+    ],
+    "indicadores": [
+      {
+        "nombre": "latencia",
+        "origen": "cliente-moonlight"
+      },
+      {
+        "nombre": "fps",
+        "origen": "cliente-moonlight"
+      }
+    ]
+  },
+  "aplicacion": {
+    "host": [
+      "sensibilidad-raton",
+      "aceleracion-raton"
+    ],
+    "cliente": [
+      "layout-tactil"
+    ],
+    "pasosManuales": [
+      "Este perfil existe como ejemplo de como documentar un juego AAA pesado: no implica que la VM elegida lo mueva con soltura."
+    ]
+  }
+}

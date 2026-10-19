@@ -1,0 +1,75 @@
+name: windows-scripts
+
+# Humo real en un runner Windows: el modulo importa, la ayuda carga, la configuracion se
+# valida y el preflight se ejecuta en un SO Windows autentico. NO instala apps ni toca
+# registros: eso pertenece a una VM del proyecto, no al runner compartido de GitHub.
+
+on:
+  pull_request:
+    paths: ["scripts/**", "config/**", "apps/**", "gaming/**"]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 4 * * 1"   # los lunes: el catalogo de apps caduca
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Prueba de humo en Windows Server
+    runs-on: windows-latest
+    env:
+      GVM_PERMISOS_SIN_ADMIN: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Config de prueba en la ruta que veran los scripts
+        shell: pwsh
+        run: |
+          $dir = Join-Path $env:ProgramData 'WinGamingVM\config'
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          Copy-Item config/vm.example.json (Join-Path $dir 'vm.json') -Force
+          foreach ($f in Get-ChildItem config -Filter *.json) { Copy-Item $f.FullName $dir -Force }
+
+      - name: El modulo importa, exporta y su ayuda carga
+        shell: pwsh
+        run: |
+          Import-Module ./scripts/win/Modules/GamingVM/GamingVM.psd1 -Force
+          $exportadas = Get-Command -Module GamingVM
+          if ($exportadas.Count -lt 15) { throw "el modulo expone solo $($exportadas.Count) funciones" }
+          foreach ($s in Get-ChildItem scripts/win -Filter *.ps1) {
+            $ayuda = Get-Help $s.FullName -ErrorAction SilentlyContinue
+            if (-not $ayuda.Synopsis -or -not $ayuda.Synopsis.Trim()) { throw "$($s.Name) no tiene ayuda" }
+          }
+          Write-Host "funciones exportadas: $($exportadas.Count)"
+
+      - name: Scripts que modifican el sistema soportan -WhatIf
+        shell: pwsh
+        run: |
+          $soloLectura = 'Test-GamingReadiness.ps1','Get-SystemMetrics.ps1','Unlock-ConsoleSession.ps1'
+          foreach ($s in Get-ChildItem scripts/win -Filter *.ps1) {
+            if ($soloLectura -contains $s.Name) { continue }
+            if (-not (Get-Command $s.FullName).SupportsShouldProcess) { throw "$($s.Name) no soporta -WhatIf" }
+          }
+
+      - name: Preflight y simulacion (sin permisos de admin, sin cambios)
+        shell: pwsh
+        run: |
+          ./scripts/win/Bootstrap-GamingVM.ps1 -Fases preflight -Simulacion
+          ./scripts/win/Bootstrap-GamingVM.ps1 -Simulacion
+
+      - name: 'Informe de preparacion (informativo: el runner no es una VM de gaming)'
+        continue-on-error: true
+        shell: pwsh
+        run: ./scripts/win/Test-GamingReadiness.ps1 -Exportar
+
+      - name: Adjuntar informe del runner
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: informe-runner-windows
+          path: C:\ProgramData\WinGamingVM\informes\
+          if-no-files-found: ignore
+          retention-days: 7

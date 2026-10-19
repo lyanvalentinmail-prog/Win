@@ -1,0 +1,57 @@
+name: release
+
+# Publica una version. Los artefactos son SOLO el codigo y los datos de este repo:
+# no se empaquetan instaladores, ISO de Windows ni drivers (ver LICENSE).
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: El tag coincide con VERSION
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          test "$tag" = "$(tr -d '[:space:]' < VERSION)" || { echo "tag=$tag pero VERSION=$(cat VERSION)"; exit 1; }
+
+      - name: Validar antes de publicar
+        run: |
+          python -m pip install -r scripts/validate/requirements.txt
+          python scripts/validate/validate.py
+
+      - name: El paquete no lleva binarios ajenos
+        run: |
+          if find . -path ./.git -prune -o -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.msp' -o -name '*.iso' \) -print | grep -q .; then
+            echo "Hay binarios en el arbol del repo"; exit 1
+          fi
+
+      - name: Notas del release desde CHANGELOG
+        run: python scripts/validate/release_notes.py
+
+      - name: Artefactos de codigo (zip + tar.gz + hashes)
+        run: |
+          mkdir -p dist
+          git archive --format=zip -o "dist/win-gaming-vm-${GITHUB_REF_NAME}.zip" HEAD
+          git archive --format=tar.gz -o "dist/win-gaming-vm-${GITHUB_REF_NAME}.tar.gz" HEAD
+          (cd dist && sha256sum *.zip *.tar.gz > SHA256SUMS.txt)
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          body_path: release-notes.md
+          files: |
+            dist/win-gaming-vm-${{ github.ref_name }}.zip
+            dist/win-gaming-vm-${{ github.ref_name }}.tar.gz
+            dist/SHA256SUMS.txt

@@ -1,0 +1,192 @@
+{
+  "$schema": "../schemas/gaming-profile.schema.json",
+  "schemaVersion": "1.0",
+  "id": "hades",
+  "nombre": "Hades",
+  "juego": {
+    "tienda": "steam",
+    "launcher": "Steam",
+    "appId": "1145360",
+    "procesos": [
+      "Hades.exe"
+    ],
+    "urlFicha": "https://store.steampowered.com/app/1145360/"
+  },
+  "requisitos": {
+    "fuente": "https://store.steampowered.com/app/1145360/HADES/",
+    "vcpu": 3,
+    "ramGiB": 4,
+    "vramGiB": 1,
+    "almacenamientoGiB": 15,
+    "apiGrafica": "DirectX 11",
+    "nota": "Motor Unity 2D/3D ligero: 60 fps estables en una GPU particionada de 4 GiB en 1080p todo alto."
+  },
+  "compatibilidadVm": {
+    "antitrampas": {
+      "sistemas": [
+        "ninguno"
+      ],
+      "vm": "permitida",
+      "riesgoBaneo": "bajo"
+    },
+    "vmReportada": "documentada",
+    "necesitaGpu": true,
+    "nota": "Diseno pensado para mando: es el mejor candidato para jugar con controles tactiles en Android."
+  },
+  "rendimiento": {
+    "preset": "equilibrado",
+    "fpsObjetivo": 60,
+    "fpsCap": 60,
+    "resolucion": null,
+    "ajustes": [
+      {
+        "clave": "Full Screen",
+        "valor": "si",
+        "efecto": "Sin bordes ni compositing extra",
+        "donde": "dentro-del-juego",
+        "automatizable": false
+      },
+      {
+        "clave": "V-Sync",
+        "valor": "on",
+        "efecto": "Evita que la GPU genere frames de sobra y dispare el bitrate",
+        "donde": "dentro-del-juego",
+        "automatizable": false
+      },
+      {
+        "clave": "-fullscreen -window-size 1920x1080",
+        "valor": "parametros",
+        "efecto": "Arranca ya en la resolucion del stream",
+        "donde": "lanzar-con-parametros",
+        "automatizable": false
+      }
+    ],
+    "parametrosLanzamiento": [
+      "-window-mode exclusive"
+    ]
+  },
+  "canales": {
+    "rdp": {
+      "recomendado": false,
+      "nota": "Juego de accion con esquives de 1/6 s: la latencia anadida de RDP (30-90 ms) se nota."
+    },
+    "moonlight": {
+      "recomendado": true,
+      "nota": "Mando virtual + 1080p60 HEVC 25 Mbps."
+    }
+  },
+  "controles": {
+    "nativo": [
+      "teclado",
+      "raton",
+      "mando"
+    ],
+    "mando": {
+      "soportado": true,
+      "tipo": "xinput",
+      "nota": "Soporte completo de Xbox/PlayStation; los sticks se leen por XInput."
+    },
+    "sensibilidad": {
+      "raton": 1.0,
+      "mouseSensitivity": 10,
+      "aceleracion": false,
+      "inversionEjeY": false
+    },
+    "mapeoTactil": {
+      "modo": "mando-virtual",
+      "layout": "../touch/layouts/accion-2sticks.json",
+      "nota": "Stick izq = mover, stick der = no hace falta, A = attack, B = dash, X = special, Y = cast, LB/RB = consumo/llamada."
+    },
+    "teclas": [
+      {
+        "original": "gamepad-leftstick-up",
+        "nuevo": "w"
+      },
+      {
+        "original": "gamepad-leftstick-down",
+        "nuevo": "s"
+      },
+      {
+        "original": "gamepad-leftstick-left",
+        "nuevo": "a"
+      },
+      {
+        "original": "gamepad-leftstick-right",
+        "nuevo": "d"
+      },
+      {
+        "original": "gamepad-a",
+        "nuevo": "j",
+        "motivo": "Ataque"
+      },
+      {
+        "original": "gamepad-b",
+        "nuevo": "space",
+        "motivo": "Dash"
+      },
+      {
+        "original": "gamepad-x",
+        "nuevo": "k",
+        "motivo": "Especial"
+      },
+      {
+        "original": "gamepad-y",
+        "nuevo": "l",
+        "motivo": "Magic"
+      },
+      {
+        "original": "gamepad-lb",
+        "nuevo": "u"
+      },
+      {
+        "original": "gamepad-rb",
+        "nuevo": "i"
+      }
+    ],
+    "atajos": [
+      {
+        "nombre": "pausa",
+        "teclas": "Esc",
+        "via": "juego"
+      },
+      {
+        "nombre": "abrir-menu",
+        "teclas": "Select",
+        "via": "cliente-moonlight"
+      },
+      {
+        "nombre": "salir-del-juego",
+        "teclas": "Alt+F4",
+        "via": "windows",
+        "nota": "Ultimo recurso: puede dejar Steam a medias y obligar a verificar la libreria."
+      }
+    ],
+    "indicadores": [
+      {
+        "nombre": "latencia",
+        "origen": "cliente-moonlight",
+        "activar": "Quick menu > Show stats"
+      },
+      {
+        "nombre": "fps",
+        "origen": "cliente-moonlight"
+      }
+    ]
+  },
+  "aplicacion": {
+    "host": [
+      "sensibilidad-raton",
+      "aceleracion-raton",
+      "remap-teclas-powertoys"
+    ],
+    "cliente": [
+      "layout-tactil",
+      "resolucion-stream",
+      "mostrar-estadisticas"
+    ],
+    "pasosManuales": [
+      "Steam > Hades > Propiedades > Mando > usar la configuracion de Steam Input del perfil 'accion-2sticks'.",
+      "En el cliente: editar el layout y poner los botones grandes en las zonas de pulgar."
+    ]
+  }
+}

@@ -1,0 +1,157 @@
+{
+  "$schema": "../schemas/gaming-profile.schema.json",
+  "schemaVersion": "1.0",
+  "id": "terraria",
+  "nombre": "Terraria",
+  "juego": {
+    "tienda": "steam",
+    "launcher": "Steam",
+    "appId": "105600",
+    "procesos": [
+      "Terraria.exe"
+    ]
+  },
+  "requisitos": {
+    "fuente": "https://store.steampowered.com/app/105600/",
+    "vcpu": 2,
+    "ramGiB": 1,
+    "vramGiB": 0.256,
+    "almacenamientoGiB": 0.5,
+    "apiGrafica": "XNA/Microsoft DirectX 9 (2D)",
+    "nota": "Terraria no tiene soporte nativo de mando: necesita mapeo teclado/raton (AntiMicroX o Steam Input). Es el ejemplo perfecto de porque el proyecto separa 'mando virtual del cliente' y 'remapeo en el host'."
+  },
+  "compatibilidadVm": {
+    "antitrampas": {
+      "sistemas": [
+        "ninguno"
+      ],
+      "vm": "permitida",
+      "riesgoBaneo": "bajo"
+    },
+    "vmReportada": "documentada",
+    "necesitaGpu": false,
+    "nota": "Requiere .NET Framework 3.1/4.x + XNA, presente en Windows 10/11 y Server con el 'Desktop Experience'; puede solicitar la instalacion del componente .NET 3.5."
+  },
+  "rendimiento": {
+    "preset": "compatibilidad",
+    "fpsObjetivo": 60,
+    "fpsCap": 60,
+    "resolucion": null,
+    "ajustes": [
+      {
+        "clave": "FrameSkip",
+        "valor": "do not draw",
+        "efecto": "Evita picos en el codificador",
+        "donde": "dentro-del-juego",
+        "automatizable": false
+      },
+      {
+        "clave": "LightMode",
+        "valor": "Retro",
+        "efecto": "Baja el coste de GPU de la iluminacion",
+        "donde": "dentro-del-juego",
+        "automatizable": false
+      }
+    ],
+    "parametrosLanzamiento": []
+  },
+  "canales": {
+    "rdp": {
+      "recomendado": true,
+      "nota": "Excelente en RDP: 2D, poco cambio de frame, compresion barata."
+    },
+    "moonlight": {
+      "recomendado": true,
+      "nota": "2D y poco cambio de frame: 20 Mbps HEVC sobran y el overlay tactil funciona de maravilla."
+    }
+  },
+  "controles": {
+    "nativo": [
+      "teclado",
+      "raton"
+    ],
+    "mando": {
+      "soportado": false,
+      "tipo": "ninguno",
+      "nota": "Sin soporte nativo: usar Steam Input (mapea el mando a teclas) o AntiMicroX; ambos se documentan en gaming/steam/README.md."
+    },
+    "sensibilidad": {
+      "raton": 1.0,
+      "mouseSensitivity": 10,
+      "aceleracion": false
+    },
+    "mapeoTactil": {
+      "modo": "mando-virtual",
+      "layout": "../touch/layouts/plataformas-2d.json",
+      "nota": "D-pad + A saltar + X usar item + zona de toque para apuntar el raton."
+    },
+    "teclas": [
+      {
+        "original": "gamepad-leftstick-left",
+        "nuevo": "a"
+      },
+      {
+        "original": "gamepad-leftstick-right",
+        "nuevo": "d"
+      },
+      {
+        "original": "gamepad-a",
+        "nuevo": "space",
+        "motivo": "Saltar"
+      },
+      {
+        "original": "gamepad-x",
+        "nuevo": "mouse-left",
+        "motivo": "Atacar/construir"
+      },
+      {
+        "original": "gamepad-y",
+        "nuevo": "mouse-right",
+        "motivo": "Usar"
+      },
+      {
+        "original": "gamepad-lb",
+        "nuevo": "o"
+      },
+      {
+        "original": "gamepad-rb",
+        "nuevo": "p"
+      },
+      {
+        "original": "gamepad-start",
+        "nuevo": "escape"
+      }
+    ],
+    "atajos": [
+      {
+        "nombre": "pausa",
+        "teclas": "Esc",
+        "via": "juego"
+      },
+      {
+        "nombre": "inventario",
+        "teclas": "Tab",
+        "via": "juego"
+      }
+    ],
+    "indicadores": [
+      {
+        "nombre": "latencia",
+        "origen": "cliente-moonlight"
+      }
+    ]
+  },
+  "aplicacion": {
+    "host": [
+      "sensibilidad-raton",
+      "aceleracion-raton",
+      "remap-teclas-powertoys"
+    ],
+    "cliente": [
+      "layout-tactil"
+    ],
+    "pasosManuales": [
+      "Activar Steam Input para Terraria y cargar el mapeo 'plataformas-2d' (los botones del mando generan pulsaciones de teclado)."
+    ]
+  }
+}

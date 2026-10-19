@@ -1,0 +1,222 @@
+{
+  "schemaVersion": "1.0",
+  "descripcion": "Lista cerrada de origenes de descarga admitidos. scripts/win/Install-Apps.ps1 rechaza cualquier URL cuyo host no este aqui (apps.blockNonOfficialSources=true). Esto NO sustituye a la verificacion de hash/firma: es una red adicional contra typosquatting y espejos.",
+  "reglas": {
+    "puerto": "solo https (443); http se rechaza siempre",
+    "redirecciones": "se validan todos los hosts intermedios de una redireccion",
+    "winget": "la fuente de instalacion primaria es el repositorio comunitario 'winget' de Microsoft, que publica manifiestos firmados con URL e InstallerSha256. La validacion de dominio aplica a las URLs de 'descargaDirecta' declaradas en el catalogo.",
+    "no-se-permite": [
+      "cualquier host que no este en hosts permitidos",
+      "repositorios de terceros tipo 'mytoolkit-free'",
+      "adjuntos de correo/foros",
+      "apk/instaladores de terceros para apps moviles"
+    ]
+  },
+  "hostsPermitidos": {
+    "www.7-zip.org": {
+      "producto": "7-Zip",
+      "comentario": "unico dominio oficial del autor"
+    },
+    "download.videolan.org": {
+      "producto": "VLC"
+    },
+    "www.videolan.org": {
+      "producto": "VLC (pagina)"
+    },
+    "code.visualstudio.com": {
+      "producto": "VS Code"
+    },
+    "update.code.visualstudio.com": {
+      "producto": "VS Code (binarios)"
+    },
+    "dl.google.com": {
+      "producto": "Google Chrome"
+    },
+    "www.google.com": {
+      "producto": "Google Chrome (pagina)"
+    },
+    "download.mozilla.org": {
+      "producto": "Firefox"
+    },
+    "www.mozilla.org": {
+      "producto": "Firefox (pagina)"
+    },
+    "laptop-updates.brave.com": {
+      "producto": "Brave"
+    },
+    "brave.com": {
+      "producto": "Brave (pagina)"
+    },
+    "notepad-plus-plus.org": {
+      "producto": "Notepad++"
+    },
+    "cdn.akamai.steamstatic.com": {
+      "producto": "Steam (CDN oficial de Valve)"
+    },
+    "media.steampowered.com": {
+      "producto": "Steam"
+    },
+    "store.steampowered.com": {
+      "producto": "Steam (pagina)"
+    },
+    "epicgames-download1.akamaized.net": {
+      "producto": "Epic Games Launcher",
+      "comentario": "CDN oficial declarado en el manifiesto de winget"
+    },
+    "store.epicgames.com": {
+      "producto": "Epic Games (pagina)"
+    },
+    "launcher.mojang.com": {
+      "producto": "Minecraft Launcher (Java)"
+    },
+    "piston-data.mojang.com": {
+      "producto": "Minecraft (descargas de juego/runtime)"
+    },
+    "www.minecraft.net": {
+      "producto": "Minecraft (pagina)"
+    },
+    "github.com": {
+      "producto": "Releases oficiales de LizardByte, ShareX, AntiMicroX, microsoft/terminal",
+      "comentario": "solo repos de 'githubReleasesPermitidos' o del propio fabricante"
+    },
+    "objects.githubusercontent.com": {
+      "producto": "CDN de assets de GitHub Releases",
+      "comentario": "necesario porque los assets de GitHub redireccionan aqui"
+    },
+    "cdn.objects.githubusercontent.com": {
+      "producto": "CDN de assets de GitHub Releases"
+    },
+    "pkgs.tailscale.com": {
+      "producto": "Tailscale"
+    },
+    "tailscale.com": {
+      "producto": "Tailscale (pagina)"
+    },
+    "www.wireguard.com": {
+      "producto": "WireGuard"
+    },
+    "download.cpuid.com": {
+      "producto": "CPU-Z / HWMonitor / powerMAX"
+    },
+    "www.cpuid.com": {
+      "producto": "CPUID (pagina)"
+    },
+    "www.techpowerup.com": {
+      "producto": "GPU-Z / NVCleanstall / ThrottleStop"
+    },
+    "us2.techpowerup.com": {
+      "producto": "TechPowerUp (CDN de descargas)"
+    },
+    "us3.techpowerup.com": {
+      "producto": "TechPowerUp (CDN de descargas)"
+    },
+    "geeks3d.com": {
+      "producto": "FurMark"
+    },
+    "sharex.net": {
+      "producto": "ShareX (pagina)"
+    },
+    "www.msi.com": {
+      "producto": "MSI Afterburner / Kombustor (pagina)"
+    },
+    "obsproject.com": {
+      "producto": "OBS Studio"
+    },
+    "cdn-fastly.obsproject.com": {
+      "producto": "OBS Studio (CDN)"
+    },
+    "discord.com": {
+      "producto": "Discord"
+    },
+    "dl.discordapp.net": {
+      "producto": "Discord (CDN)"
+    },
+    "adoptium.net": {
+      "producto": "Eclipse Temurin (JRE/JDK)"
+    },
+    "nvidia.com": {
+      "producto": "Driver NVIDIA GRID (pagina)"
+    },
+    "us.download.nvidia.com": {
+      "producto": "Driver NVIDIA (CDN oficial)"
+    },
+    "site-cdn.nvidia.com": {
+      "producto": "NVIDIA (CDN)"
+    },
+    "download.windowsupdate.com": {
+      "producto": "Actualizaciones de Windows"
+    },
+    "go.microsoft.com": {
+      "producto": "Enlaces cortos de Microsoft"
+    },
+    "aka.ms": {
+      "producto": "Enlaces cortos de Microsoft (solo los listados en 'akaMsPermitidos')"
+    },
+    "download.microsoft.com": {
+      "producto": "Descargas de Microsoft"
+    },
+    "getsharex.com": {
+      "producto": "ShareX (pagina)"
+    },
+    "learn.microsoft.com": {
+      "producto": "Documentacion de Microsoft (usado como 'fuente.oficial')"
+    },
+    "www.microsoft.com": {
+      "producto": "Microsoft Edge / tienda"
+    },
+    "app.lizardbyte.dev": {
+      "producto": "Sunshine / Moonlight (pagina oficial del proyecto)"
+    },
+    "update.nvidia.com": {
+      "producto": "Driver NVIDIA (CDN de GeForce)"
+    },
+    "getgreenshot.org": {
+      "producto": "Greenshot"
+    }
+  },
+  "akaMsPermitidos": [
+    {
+      "url": "https://aka.ms/getwinget",
+      "que": "App Installer (winget) oficial de Microsoft",
+      "cuando": "Solo en Server 2022/2019 o imagenes sin winget"
+    },
+    {
+      "url": "https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx",
+      "que": "Dependencia de App Installer",
+      "cuando": "Igual que arriba"
+    }
+  ],
+  "githubReleasesPermitidos": [
+    {
+      "repo": "LizardByte/Sunshine",
+      "producto": "Sunshine",
+      "verificarTagFirmado": true
+    },
+    {
+      "repo": "cgutman/Moonlight-android",
+      "producto": "Moonlight (referencia, no se instala en la VM)",
+      "verificarTagFirmado": false
+    },
+    {
+      "repo": "ShareX/ShareX",
+      "producto": "ShareX",
+      "verificarTagFirmado": false
+    },
+    {
+      "repo": "AntiMicroX/antimicrox",
+      "producto": "AntiMicroX",
+      "verificarTagFirmado": false
+    },
+    {
+      "repo": "microsoft/winget-pkgs",
+      "producto": "Manifiestos para cotejar SHA-256",
+      "verificarTagFirmado": false
+    }
+  ],
+  "dominiosSospechosos": [
+    "cualquier host que contenga 'update', 'download', 'installer' y ademas un nombre de marca sin el dominio real de la marca",
+    "hosts en .xyz, .top, .ru, .su, .info para instaladores",
+    "repositorios de GitHub personales que se hagan pasar por el fabricante",
+    "agregadores de 'portables' y 'cracks': ademas violan los términos del software y las licencias"
+  ]
+}

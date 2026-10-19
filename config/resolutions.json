@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0",
+  "descripcion": "Resoluciones utiles para la sesion remota y el stream de juego. 'movil' = encaja en pantallas Android 16:9/20:9 sin recorte; 'escalaRecomendada' es la DPI de Windows con la que el texto se lee bien a esa resolucion en un movil a 30-40 cm.",
+  "notaRdp": "Windows App adapta la resolucion de la sesion al tamano de la ventana/pantalla del dispositivo. Para forzar una resolucion concreta en un cliente de escritorio se usan desktopwidth/desktopheight del .rdp (ver config/remote-session.json). En la VM se puede anadir un modo de pantalla virtual con el driver de monitor generico si necesitas una resolucion fija independientemente del cliente.",
+  "resoluciones": [
+    { "id": "1280x720@60",  "ancho": 1280, "alto": 720,  "hercios": 60,  "movil": true,  "escalaRecomendada": 100, "anchoBandMbpsRdp": 6,  "anchoBandMbpsSunshine": 8,  "nota": "Enlace movil pobre o GPU 1/6 muy justa." },
+    { "id": "1366x768@60",  "ancho": 1366, "alto": 768,  "hercios": 60,  "movil": true,  "escalaRecomendada": 100, "anchoBandMbpsRdp": 7,  "anchoBandMbpsSunshine": 9 },
+    { "id": "1600x900@60",  "ancho": 1600, "alto": 900,  "hercios": 60,  "movil": true,  "escalaRecomendada": 100, "anchoBandMbpsRdp": 9,  "anchoBandMbpsSunshine": 13 },
+    { "id": "1920x1080@60", "ancho": 1920, "alto": 1080, "hercios": 60,  "movil": true,  "escalaRecomendada": 125, "anchoBandMbpsRdp": 18, "anchoBandMbpsSunshine": 25, "nota": "Punto dulce para la mayoria de moviles y tablets." },
+    { "id": "1920x1080@120","ancho": 1920, "alto": 1080, "hercios": 120, "movil": true,  "escalaRecomendada": 125, "anchoBandMbpsRdp": 18, "anchoBandMbpsSunshine": 40, "nota": "Solo si el panel del dispositivo es 120 Hz y RTT < 25 ms." },
+    { "id": "2340x1080@60", "ancho": 2340, "alto": 1080, "hercios": 60,  "movil": true,  "escalaRecomendada": 125, "anchoBandMbpsRdp": 21, "anchoBandMbpsSunshine": 30, "nota": "Relacion 19,5:9 tipica de moviles; en RDP puede recortar bordes si el host no tiene ese modo." },
+    { "id": "2560x1440@60", "ancho": 2560, "alto": 1440, "hercios": 60,  "movil": false, "escalaRecomendada": 150, "anchoBandMbpsRdp": 30, "anchoBandMbpsSunshine": 60, "nota": "Tablet/PC; exige >= 8 GiB de VRAM para jugar aqui." },
+    { "id": "3840x2160@60", "ancho": 3840, "alto": 2160, "hercios": 60,  "movil": false, "escalaRecomendada": 200, "anchoBandMbpsRdp": 60, "anchoBandMbpsSunshine": 90, "nota": "4K: poco realista en NV6ads_A10_v5 (4 GiB VRAM). Marcado como 'no recomendado' por el auditor." },
+    { "id": "800x600@60",   "ancho": 800,  "alto": 600,  "hercios": 60,  "movil": true,  "escalaRecomendada": 100, "anchoBandMbpsRdp": 2,  "anchoBandMbpsSunshine": 4, "nota": "Modo emergencia: solo para administrar la VM desde 3G." }
+  ]
+}

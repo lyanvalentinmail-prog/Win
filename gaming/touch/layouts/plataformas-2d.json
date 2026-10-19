@@ -1,0 +1,138 @@
+{
+  "$schema": "../touch-layout.schema.json",
+  "schemaVersion": "1.0",
+  "id": "plataformas-2d",
+  "orientacion": "horizontal",
+  "rejilla": {
+    "columnas": 12,
+    "filas": 6
+  },
+  "nombre": "Plataformas 2D / metroidvania",
+  "descripcion": "D-pad a la izquierda (mas preciso que un stick para saltos en rejilla), botones de accion a la derecha y zona de apuntado separada.",
+  "destino": "mixto",
+  "elementos": [
+    {
+      "tipo": "pad-digital",
+      "id": "cruz",
+      "x": 0.12,
+      "y": 0.7,
+      "tamano": 0.22,
+      "opacidad": 45,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "dpad"
+      },
+      "etiqueta": ""
+    },
+    {
+      "tipo": "boton",
+      "id": "saltar",
+      "x": 0.88,
+      "y": 0.72,
+      "tamano": 0.115,
+      "opacidad": 55,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "a"
+      },
+      "etiqueta": "A"
+    },
+    {
+      "tipo": "boton",
+      "id": "ataque",
+      "x": 0.74,
+      "y": 0.86,
+      "tamano": 0.105,
+      "opacidad": 50,
+      "asignación": {
+        "tipo": "raton",
+        "valor": "izquierda"
+      },
+      "etiqueta": "X"
+    },
+    {
+      "tipo": "boton",
+      "id": "habilidad",
+      "x": 0.72,
+      "y": 0.58,
+      "tamano": 0.085,
+      "opacidad": 45,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "y"
+      },
+      "etiqueta": "Y"
+    },
+    {
+      "tipo": "boton",
+      "id": "dash",
+      "x": 0.93,
+      "y": 0.5,
+      "tamano": 0.08,
+      "opacidad": 45,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "rb"
+      },
+      "etiqueta": "RT"
+    },
+    {
+      "tipo": "boton",
+      "id": "escudo",
+      "x": 0.58,
+      "y": 0.62,
+      "tamano": 0.075,
+      "opacidad": 40,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "lb"
+      },
+      "etiqueta": "LT"
+    },
+    {
+      "tipo": "zona-toque",
+      "id": "apuntar",
+      "x": 0.45,
+      "y": 0.35,
+      "tamano": 0.1,
+      "opacidad": 0,
+      "asignación": {
+        "tipo": "raton",
+        "valor": "derecha"
+      },
+      "ancho": 0.3,
+      "alto": 0.4,
+      "nota": "Arrastrar = mover puntero para dirigir bloques/arma."
+    },
+    {
+      "tipo": "boton",
+      "id": "pausa",
+      "x": 0.5,
+      "y": 0.08,
+      "tamano": 0.06,
+      "opacidad": 30,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "start"
+      },
+      "etiqueta": "START"
+    },
+    {
+      "tipo": "boton",
+      "id": "inventario",
+      "x": 0.6,
+      "y": 0.08,
+      "tamano": 0.06,
+      "opacidad": 30,
+      "asignación": {
+        "tipo": "tecla",
+        "valor": "tab"
+      },
+      "etiqueta": "TAB"
+    }
+  ],
+  "limitaciones": [
+    "El D-pad virtual no tiene 'input buffering' de un mando fisico: los encadenados ajustados al frame pueden fallar. Sube 'tamano' de la cruz si fallan.",
+    "En juegos con saltos de un solo toque (Terraria), asignar el toque de 'saltar' a 'pulsacion' y no a 'mantener'."
+  ]
+}

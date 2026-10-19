@@ -1,0 +1,203 @@
+{
+  "$schema": "../schemas/gaming-profile.schema.json",
+  "schemaVersion": "1.0",
+  "id": "minecraft-java",
+  "nombre": "Minecraft (Java Edition)",
+  "juego": {
+    "tienda": "minecraft",
+    "launcher": "Mojang.MinecraftLauncher",
+    "appId": null,
+    "procesos": [
+      "javaw.exe",
+      "java.exe",
+      "MinecraftLauncher.exe"
+    ],
+    "urlFicha": "https://www.minecraft.net/es-es/download"
+  },
+  "requisitos": {
+    "fuente": "https://help.minecraft.net/hc/en-us/articles/4409174171405",
+    "vcpu": 2,
+    "ramGiB": 4,
+    "vramGiB": 2,
+    "almacenamientoGiB": 2,
+    "apiGrafica": "OpenGL 3.2 core (Java Edition); RTX solo en Bedrock con soporte hardware",
+    "nota": "Sin GPU fisica la GPU virtual no ofrece OpenGL acelerado de forma fiable: en modo software (LLVMpipe) el FPS cae a 10-20. Este perfil asume gpu.mode != none."
+  },
+  "compatibilidadVm": {
+    "antitrampas": {
+      "sistemas": [
+        "ninguno"
+      ],
+      "vm": "permitida",
+      "riesgoBaneo": "bajo",
+      "nota": "Minecraft no usa anticheat de kernel en cliente. Los servidores con plugins tipo Grim/Matrix no banean por VM."
+    },
+    "vmReportada": "documentada",
+    "necesitaGpu": true,
+    "nota": "Java Edition en VM es un caso de uso conocido. Bedrock/UWP necesita la Store (no disponible en Server 2025)."
+  },
+  "rendimiento": {
+    "preset": "equilibrado",
+    "fpsObjetivo": 60,
+    "fpsCap": 90,
+    "resolucion": null,
+    "ajustes": [
+      {
+        "clave": "renderDistance",
+        "valor": "8",
+        "efecto": "Baja el uso de VRAM (4 GiB en 1/6 de A10) sin afectar la jugabilidad",
+        "donde": "archivo-de-configuracion-del-juego",
+        "automatizable": false
+      },
+      {
+        "clave": "graphicsMode",
+        "valor": "fast",
+        "efecto": "+20-35 % FPS frente a 'fabulous'",
+        "donde": "archivo-de-configuracion-del-juego",
+        "automatizable": false
+      },
+      {
+        "clave": "maxFps",
+        "valor": "90",
+        "efecto": "Estabiliza el bitrate del stream: el codificador no paga cuadros que el mando no ve",
+        "donde": "archivo-de-configuracion-del-juego",
+        "automatizable": false
+      },
+      {
+        "clave": "useVsync",
+        "efecto": "Activar solo si hay tearing; anade ~1 frame de latencia",
+        "valor": "true",
+        "donde": "archivo-de-configuracion-del-juego",
+        "automatizable": false
+      },
+      {
+        "clave": "-Xmx3G",
+        "valor": "3G",
+        "efecto": "Memoria del cliente Java: no dar toda la RAM de la VM al juego",
+        "donde": "lanzar-con-parametros",
+        "automatizable": false
+      }
+    ],
+    "parametrosLanzamiento": [
+      "-Xmx3G",
+      "-XX:+UseG1GC"
+    ]
+  },
+  "canales": {
+    "rdp": {
+      "recomendado": false,
+      "nota": "Jugable para construir/administrar un servidor, pero el raton llega con retardo: RDP no ofrece entrada de raton relativa de baja latencia en este escenario."
+    },
+    "moonlight": {
+      "recomendado": true,
+      "nota": "1080p60 / 25 Mbps HEVC con NVENC. El cliente expone el mando virtual y el raton relativo."
+    }
+  },
+  "controles": {
+    "nativo": [
+      "teclado",
+      "raton",
+      "mando"
+    ],
+    "mando": {
+      "soportado": true,
+      "tipo": "xinput",
+      "nota": "Soporte de mando nativo desde 1.15 con rebind; la mira con stick derecho es mediocre (sin raw input)."
+    },
+    "sensibilidad": {
+      "raton": 1.0,
+      "mouseSensitivity": 8,
+      "aceleracion": false,
+      "inversionEjeY": false
+    },
+    "mapeoTactil": {
+      "modo": "mando-virtual",
+      "layout": "../touch/layouts/sandbox-fps.json",
+      "nota": "Stick izq = movimiento, stick der = camara, A = saltar, X = romper (clic izq), Y = poner bloque (clic der), LB/RB = rotar hotbar."
+    },
+    "teclas": [
+      {
+        "original": "gamepad-x",
+        "nuevo": "mouse-left",
+        "motivo": "Romper bloque / interactuar"
+      },
+      {
+        "original": "gamepad-y",
+        "nuevo": "mouse-right",
+        "motivo": "Colocar bloque"
+      },
+      {
+        "original": "gamepad-b",
+        "nuevo": "escape",
+        "motivo": "Pausa / menú del juego"
+      },
+      {
+        "original": "gamepad-lb",
+        "nuevo": "1",
+        "motivo": "Item anterior"
+      },
+      {
+        "original": "gamepad-rb",
+        "nuevo": "q",
+        "motivo": "Soltar item"
+      }
+    ],
+    "atajos": [
+      {
+        "nombre": "pausa",
+        "teclas": "Esc",
+        "via": "juego"
+      },
+      {
+        "nombre": "abrir-menu",
+        "teclas": "Select (Back)",
+        "via": "cliente-moonlight",
+        "nota": "En Moonlight, mantener Start abre el menu de emulacion de raton; el quick-menu del cliente abre con el gesto de borde."
+      },
+      {
+        "nombre": "inventario",
+        "teclas": "E",
+        "via": "powertoys-keyboard-manager",
+        "nota": "Solo necesario si juegas con el overlay tactil: se remapea a gamepad-view."
+      },
+      {
+        "nombre": "captura",
+        "teclas": "Ctrl+Alt+F12",
+        "via": "powertoys-keyboard-manager"
+      }
+    ],
+    "indicadores": [
+      {
+        "nombre": "latencia",
+        "origen": "cliente-moonlight",
+        "activar": "Moonlight > Ajustes > Show performance overlay (o el boton del quick-menu durante la partida)"
+      },
+      {
+        "nombre": "fps",
+        "origen": "contador-de-rendimiento-windows",
+        "activar": "En la VM: scripts/win/Get-SystemMetrics.ps1 -StreamLatency, o el contador \\GPU Engine(*)\\Utilization Percentage"
+      },
+      {
+        "nombre": "uso-gpu",
+        "origen": "task-manager"
+      }
+    ]
+  },
+  "aplicacion": {
+    "host": [
+      "sensibilidad-raton",
+      "aceleracion-raton",
+      "registro-de-ajustes"
+    ],
+    "cliente": [
+      "layout-tactil",
+      "mostrar-estadisticas",
+      "sensibilidad-trackpad"
+    ],
+    "pasosManuales": [
+      "En el Android: abrir Moonlight > ... (mantener pulsada la tarjeta 'Escritorio') > Usar configuracion personalizada > On-screen controls > Activar y editar el layout (modo Move/Resize).",
+      "El layout 'sandbox-fps.json' de este perfil es la especificacion de referencia (posiciones y tamanos normalizados) para colocarlo igual en cualquier dispositivo.",
+      "En el lanzador de Minecraft: asignar las teclas del mando en Opciones > Controles (Minecraft no lee perfiles externos de Steam Input para el teclado virtual)."
+    ]
+  }
+}

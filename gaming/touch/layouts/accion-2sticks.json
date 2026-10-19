@@ -1,0 +1,137 @@
+{
+  "$schema": "../touch-layout.schema.json",
+  "schemaVersion": "1.0",
+  "id": "accion-2sticks",
+  "orientacion": "horizontal",
+  "rejilla": {
+    "columnas": 12,
+    "filas": 6
+  },
+  "nombre": "Accion con dos sticks (hack & slash, souls-like ligero)",
+  "descripcion": "Para juegos con soporte de mando: todo se envia como Xbox 360 controller, que es lo que Moonlight emula. Sin mapeo de teclas.",
+  "destino": "mando-virtual",
+  "elementos": [
+    {
+      "tipo": "joystick",
+      "id": "stick-mover",
+      "x": 0.12,
+      "y": 0.68,
+      "tamano": 0.24,
+      "opacidad": 40,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "stick-izq"
+      },
+      "etiqueta": ""
+    },
+    {
+      "tipo": "joystick",
+      "id": "stick-mirar",
+      "x": 0.88,
+      "y": 0.68,
+      "tamano": 0.22,
+      "opacidad": 25,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "stick-der"
+      },
+      "etiqueta": ""
+    },
+    {
+      "tipo": "boton",
+      "id": "ataque",
+      "x": 0.7,
+      "y": 0.86,
+      "tamano": 0.115,
+      "opacidad": 55,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "x"
+      },
+      "etiqueta": "ATK",
+      "modo": "pulsacion"
+    },
+    {
+      "tipo": "boton",
+      "id": "esquiva",
+      "x": 0.87,
+      "y": 0.5,
+      "tamano": 0.1,
+      "opacidad": 50,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "b"
+      },
+      "etiqueta": "DASH"
+    },
+    {
+      "tipo": "boton",
+      "id": "especial",
+      "x": 0.6,
+      "y": 0.62,
+      "tamano": 0.09,
+      "opacidad": 45,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "y"
+      },
+      "etiqueta": "ESP"
+    },
+    {
+      "tipo": "boton",
+      "id": "consumo",
+      "x": 0.94,
+      "y": 0.3,
+      "tamano": 0.075,
+      "opacidad": 40,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "rb"
+      },
+      "etiqueta": "POT"
+    },
+    {
+      "tipo": "boton",
+      "id": "llamada",
+      "x": 0.47,
+      "y": 0.86,
+      "tamano": 0.075,
+      "opacidad": 40,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "lb"
+      },
+      "etiqueta": "SUM"
+    },
+    {
+      "tipo": "boton",
+      "id": "menu",
+      "x": 0.5,
+      "y": 0.08,
+      "tamano": 0.06,
+      "opacidad": 30,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "start"
+      },
+      "etiqueta": "START"
+    },
+    {
+      "tipo": "boton",
+      "id": "overlay",
+      "x": 0.6,
+      "y": 0.08,
+      "tamano": 0.06,
+      "opacidad": 30,
+      "asignación": {
+        "tipo": "gamepad",
+        "valor": "back"
+      },
+      "etiqueta": "BACK"
+    }
+  ],
+  "limitaciones": [
+    "El stick derecho como camara depende de que el juego lea XInput: si solo admite teclado, usa el layout 'shooter-competitivo'.",
+    "No hay vibracion: Moonlight puede enviar rumble al mando fisico, no al layout tactil."
+  ]
+}

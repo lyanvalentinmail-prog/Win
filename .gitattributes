@@ -1,0 +1,11 @@
+# Los .ps1 del repo se guardan CON BOM UTF-8 (lo requiere Windows PowerShell 5.1 cuando
+# llevan acentos). No se usa working-tree-encoding para que git no anada un segundo BOM.
+*.ps1  text eol=crlf
+*.psm1 text eol=crlf
+*.psd1 text eol=crlf
+*.json text eol=lf
+*.md   text eol=lf
+*.tf   text eol=lf
+*.sh   text eol=lf
+*.yml  text eol=lf
+*.png  binary

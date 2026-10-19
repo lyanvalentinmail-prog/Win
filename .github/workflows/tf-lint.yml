@@ -1,0 +1,52 @@
+name: tf-lint
+
+on:
+  pull_request:
+    paths: ["infra/**", ".github/workflows/tf-lint.yml"]
+  push:
+    branches: [main]
+    paths: ["infra/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    name: fmt + init + validate + tflint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        modulo: [azure, aws, kvm]
+    defaults:
+      run:
+        working-directory: infra/${{ matrix.modulo }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      - name: terraform fmt -check
+        run: |
+          terraform fmt -check -recursive || {
+            echo "Ejecuta: terraform fmt -recursive infra/${{ matrix.modulo }}"
+            exit 1
+          }
+
+      - name: terraform init
+        run: terraform init -backend=false -input=false
+
+      - name: terraform validate
+        run: terraform validate
+
+      - uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.53.0
+
+      - name: tflint
+        run: |
+          tflint --init --config="$GITHUB_WORKSPACE/.tflint.hcl" || true
+          tflint --config="$GITHUB_WORKSPACE/.tflint.hcl" --format=compact
