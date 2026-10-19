@@ -68,16 +68,33 @@ jobs:
       - name: Scripts que modifican el sistema soportan -WhatIf
         shell: pwsh
         run: |
-          $soloLectura = 'Test-GamingReadiness.ps1', 'Get-SystemMetrics.ps1', 'Unlock-ConsoleSession.ps1'
+          # (Get-Command ruta.ps1).SupportsShouldProcess NO existe: ExternalScriptInfo no
+          # expone los atributos del bloque CmdletBinding. Se lee el AST, que es lo unico
+          # que dice la verdad sobre el fichero que se va a ejecutar.
+          $soloLectura = @('Test-GamingReadiness.ps1', 'Get-SystemMetrics.ps1', 'Unlock-ConsoleSession.ps1')
           $sinWhatIf = @()
           foreach ($s in Get-ChildItem scripts/win -Filter *.ps1) {
             if ($soloLectura -contains $s.Name) { continue }
-            if (-not (Get-Command $s.FullName).SupportsShouldProcess) {
+            $ast = [System.Management.Automation.Language.Parser]::ParseFile($s.FullName, [ref]$null, [ref]$null)
+            $attrs = $ast.FindAll({
+              param($n) $n -is [System.Management.Automation.Language.AttributeAst] -and
+                        $n.TypeName.Name -eq 'CmdletBinding'
+            }, $true)
+            $soporte = $false
+            foreach ($attr in $attrs) {
+              foreach ($na in $attr.NamedArguments) {
+                if ($na.ArgumentName -eq 'SupportsShouldProcess' -and $na.Extent.Text -notmatch '\$false') {
+                  $soporte = $true
+                }
+              }
+            }
+            if (-not $soporte) {
               $sinWhatIf += $s.Name
-              Write-Host "::error file=scripts/win/$($s.Name)::le falta SupportsShouldProcess"
+              Write-Host "::error file=scripts/win/$($s.Name)::le falta [CmdletBinding(SupportsShouldProcess = $true)]"
             }
           }
           if ($sinWhatIf.Count) { throw "sin -WhatIf: $($sinWhatIf -join ', ')" }
+          Write-Host "todos los scripts que tocan el sistema soportan -WhatIf"
 
       - name: Preflight y simulacion (sin permisos de admin, sin cambios)
         shell: pwsh

@@ -24,6 +24,8 @@ jobs:
         working-directory: infra/${{ matrix.modulo }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: hashicorp/setup-terraform@v3
         with:
@@ -31,20 +33,25 @@ jobs:
 
       - name: terraform fmt -check
         run: |
-          # 'terraform fmt -check' devuelve un codigo distinto de 0 (3 en Terraform 1.9)
-          # cuando hay ficheros por formatear. Ademas del diff en el log, lo convertimos en
-          # anotaciones para que el fallo se lea en la pestana de archivos del PR.
-          terraform fmt -check -diff -recursive >fmt.diff 2>&1
-          rc=$?
+          # 'terraform fmt -check' sale con codigo 3 cuando hay ficheros por formatear y el
+          # log de Actions es dificil de leer desde una API: el diff se convierte en
+          # anotaciones del check (se ven en la pestana "Files changed" del PR).
+          # El '|| rc=$?' evita que 'set -e' aborte el paso antes de imprimir nada.
+          rc=0
+          terraform fmt -check -diff -recursive >fmt.diff 2>&1 || rc=$?
           cat fmt.diff
           if [ "$rc" -ne 0 ]; then
-            echo "::error::el modulo no pasa 'terraform fmt'; ejecuta: terraform fmt -recursive infra/${{ matrix.modulo }}"
-            grep -E '^(---|\+\+\+)' fmt.diff | sed 's/%/%25/g' | head -20 | while IFS= read -r fich; do
-              echo "::error::necesita formato: ${fich#*  }"
+            echo "::error::el modulo no pasa 'terraform fmt'. Arreglo: terraform fmt -recursive infra/${{ matrix.modulo }}"
+            ficheros=$(grep -E '^(---|\+\+\+)' fmt.diff | sed 's/^[+a-z-]* [ab]\///' | sort -u | head -8)
+            for f in $ficheros; do
+              echo "::error file=infra/${{ matrix.modulo }}/$f::necesita formato (terraform fmt)"
             done
-            grep -E '^[+-][^+-]' fmt.diff | sed 's/%/%25/g' | head -40 | while IFS= read -r linea; do
-              echo "::error::fmt ${linea}"
-            done
+            n=0
+            while IFS= read -r linea; do
+              n=$((n + 1))
+              [ "$n" -gt 40 ] && break
+              echo "::error::fmt| ${linea}"
+            done < <(grep -E '^[+-][^+-]' fmt.diff | head -40)
             exit 1
           fi
 
