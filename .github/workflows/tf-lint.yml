@@ -79,7 +79,9 @@ jobs:
               print('::error::sin JSON de validacion; salida cruda: ' + uno.replace('%', '%25'))
           else:
               try:
-                  datos = json.loads(texto[ini:])
+                  # el wrapper de setup-terraform puede pegar su propio mensaje despues del
+                  # JSON: raw_decode se queda con el primer objeto valido y ignora el resto.
+                  datos = json.JSONDecoder().raw_decode(texto[ini:])[0]
               except Exception as exc:  # JSON roto: volcarlo tal cual
                   print('::error::validate.json ilegible (' + str(exc) + ')')
                   datos = {}

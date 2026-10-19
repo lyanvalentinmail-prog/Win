@@ -23,8 +23,8 @@ output "montar_medios_de_instalacion" {
 output "comandos_utiles" {
   description = "Comandos de libvirt para averiguar la IP, abrir la consola de instalacion, tomar instantanea y ver el disco."
   value = [
-    "virsh domifaddr ${libvirt_domain.win.name}          # IP de la VM",
-    "virt-viewer -c qemu:///system ${libvirt_domain.win.name}   # consola grafica para la instalacion",
+    "virsh domifaddr ${libvirt_domain.win.name} # IP de la VM",
+    "virt-viewer -c qemu:///system ${libvirt_domain.win.name} # consola grafica para la instalacion",
     "virsh snapshot-create-as --domain ${libvirt_domain.win.name} --name pre-juegos --disk-only --atomic",
     "qemu-img info /var/lib/libvirt/images/${libvirt_domain.win.name}-datos.qcow2",
   ]

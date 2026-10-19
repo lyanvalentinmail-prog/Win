@@ -42,7 +42,7 @@ resource "azurerm_network_interface" "win" {
   name                           = "nic-${var.name}"
   location                       = azurerm_resource_group.win.location
   resource_group_name            = azurerm_resource_group.win.name
-  accelerated_networking_enabled = var.accelerated_networking  # en azurerm >=4 se llamo asi (antes enable_accelerated_networking)
+  accelerated_networking_enabled = var.accelerated_networking # en azurerm >=4 se llamo asi (antes enable_accelerated_networking)
 
   ip_configuration {
     name                          = "ipcfg1"
@@ -66,7 +66,7 @@ resource "azurerm_windows_virtual_machine" "win" {
   provision_vm_agent        = true
   priority                  = var.spot_priority ? "Spot" : "Regular"
   eviction_policy           = var.spot_priority ? "Deallocate" : null
-  automatic_updates_enabled = var.automatic_updates  # azurerm >=4: antes enable_automatic_updates
+  automatic_updates_enabled = var.automatic_updates # azurerm >=4: antes enable_automatic_updates
   patch_mode                = var.automatic_updates ? "AutomaticByPlatform" : "Manual"
   # Trusted Launch en azurerm >=4 son estas dos banderas; el argumento security_type
   # (v3) ya no existe en el recurso y terraform validate lo rechaza.
