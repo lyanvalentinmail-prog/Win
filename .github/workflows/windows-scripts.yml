@@ -99,37 +99,42 @@ jobs:
       - name: Preflight y simulacion (sin permisos de admin, sin cambios)
         shell: pwsh
         run: |
-          # El runner de Windows es el unico sitio donde estos scripts se ejecutan de verdad,
-          # asi que el fallo tiene que decir algo mas que "exit 2": se reenvian las ultimas
-          # lineas del log del bootstrap (que si explican la fase y el motivo) como
-          # anotaciones del check.
+          # El bootstrap termina con 'exit 0' / 'exit 2' propios: llamado con '&' dentro del
+          # paso mata el proceso del step y no se imprimiria nada (eso era exactamente lo que
+          # pasaba: fallo sin mensaje). Cada caso va en su PROPIO pwsh, y el log que el script
+          # escribe en C:\ProgramData\WinGamingVM\logs se publica como anotaciones, que es lo
+          # unico que se puede leer desde la API de checks.
           $base = Join-Path $env:ProgramData 'WinGamingVM'
           $casos = @(
-            @{ Nombre = 'preflight'; Fases = @('preflight'); Simulacion = $true },
-            @{ Nombre = 'simulacion completa'; Fases = @(); Simulacion = $true }
+            @{ Nombre = 'preflight'; Argumentos = @('-Fases', 'preflight', '-Simulacion') },
+            @{ Nombre = 'simulacion completa'; Argumentos = @('-Simulacion') }
           )
+          $fallados = @()
           foreach ($caso in $casos) {
-            $arguments = @{ Simulacion = $true }
-            if ($caso.Fases.Count) { $arguments['Fases'] = $caso.Fases }
-            try {
-              & ./scripts/win/Bootstrap-GamingVM.ps1 @arguments
-            } catch {
-              Write-Host "::error::Bootstrap-GamingVM ($($caso.Nombre)) lanzo: $($_.Exception.Message)"
-            }
-            if ($LASTEXITCODE -ne 0) {
-              Write-Host "::error::Bootstrap-GamingVM ($($caso.Nombre)) salio con codigo $LASTEXITCODE"
+            $prev = $ErrorActionPreference
+            $ErrorActionPreference = 'Continue'
+            & pwsh -NoProfile -ExecutionPolicy Bypass -File ./scripts/win/Bootstrap-GamingVM.ps1 @($caso.Argumentos)
+            $codigo = $LASTEXITCODE
+            $ErrorActionPreference = $prev
+            if ($codigo -ne 0) {
+              $fallados += "$($caso.Nombre) (exit $codigo)"
+              Write-Host "::error::Bootstrap-GamingVM $($caso.Nombre) devolvio $codigo"
               $log = Get-ChildItem (Join-Path $base 'logs') -Filter '*.log' -ErrorAction SilentlyContinue |
                 Sort-Object LastWriteTime -Descending | Select-Object -First 1
               if ($log) {
-                Get-Content -LiteralPath $log.FullName -Tail 45 | ForEach-Object {
-                  Write-Host "::error::log|$($_ -replace '[\r\n]', ' '}"
+                Get-Content -LiteralPath $log.FullName -Tail 60 | ForEach-Object {
+                  $limpio = ($_ -replace '[\r\n\t]', ' ').Trim()
+                  if ($limpio) { Write-Host "::error::log|$limpio" }
                 }
               } else {
-                Write-Host '::error::no hay log en C:\ProgramData\WinGamingVM\logs: el script murio antes de abrirlo'
+                Write-Host '::error::no hay log en el BaseDir: el script murio antes de abrirlo'
               }
-              exit 1
+            } else {
+              Write-Host "OK Bootstrap-GamingVM ($($caso.Nombre))"
             }
-            Write-Host "OK Bootstrap-GamingVM ($($caso.Nombre))"
+          }
+          if ($fallados.Count) {
+            throw "simulacion del bootstrap fallo en: $($fallados -join ', ')"
           }
 
       - name: 'Informe de preparacion (informativo: el runner no es una VM de gaming)'
