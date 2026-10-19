@@ -54,7 +54,7 @@ $so = [pscustomobject]@{
     nombre     = $os.Caption
     build      = [Environment]::OSVersion.Version.Build
     esServer   = $os.Caption -match 'Server'
-    edicionCfg = $(if ($cfg) { Get-GvmConfigValor -Config $cfg -Ruta 'windows.edition' } else { 'n/d' })
+    edicionCfg = $(if ($cfg) { [string](Get-GvmConfigValor -Config $cfg -Ruta 'windows.edition') } else { 'n/d' })
     idioma     = (Get-Culture).Name
 }
 $serviciosSeguros = @('WinDefend', 'mpssvc', 'wuauserv')
@@ -73,7 +73,7 @@ if ($gpu.Presente) {
 }
 $dx = Test-GvmDirectXDisponible
 Add-Hallazgo 'Direct3D' $(if ($dx.Disponible) { 'OK' } else { 'WARN' }) $dx.Motivo
-Add-Hallazgo 'Codificador de video' $(if ($gpu.CodificadorHw -ne 'ninguno') { 'OK' } else { 'WARN' }) $(if ($gpu.CodificadorHw -ne 'ninguno') { $gpu.CodificadorHw } else { 'sin NVENC/AMF/QSV: el canal de juego no queda habilitado' })
+Add-Hallazgo 'Codificador de video' $(if ($gpu.CodificadorHw -ne 'ninguno') { 'OK' } else { 'WARN' }) $(if ($gpu.CodificadorHw -ne 'ninguno') { [string]$gpu.CodificadorHw } else { 'sin NVENC/AMF/QSV: el canal de juego no queda habilitado' })
 
 # --- 2. Sesion actual ----------------------------------------------------------
 $ses = Get-GvmSesionActual
@@ -179,7 +179,7 @@ try {
 $appResumen = @()
 foreach ($id in 'Valve.Steam', 'EpicGames.EpicGamesLauncher', 'Mojang.MinecraftLauncher', 'LizardByte.Sunshine') {
     $a = Get-GvmAppInstalada -Id $id
-    $appResumen += [pscustomobject]@{ Id = $id; Instalada = [bool]$a; Version = $(if ($a) { $a.Version } else { '' }) }
+    $appResumen += [pscustomobject]@{ Id = $id; Instalada = [bool]$a; Version = $(if ($a) { [string]$a.Version } else { '' }) }
 }
 $pend = @($appResumen | Where-Object { -not $_.Instalada })
 if ($pend.Count -eq 0) { Add-Hallazgo 'Aplicaciones' 'OK' "detectadas: $(($appResumen | ForEach-Object { $_.Id }) -join ', ')" }
@@ -232,7 +232,7 @@ if ($rutas) { Write-Host "  Informe: $($rutas.Markdown)" -ForegroundColor DarkGr
     Nivel                = $nivelGlobal
     Hallazgos            = @($hallazgos)
     Datos                = $datos
-    RutaInforme          = $(if ($rutas) { $rutas.Markdown } else { '' })
-    RutaJson             = $(if ($rutas) { $rutas.Json } else { '' })
+    RutaInforme          = $(if ($rutas) { [string]$rutas.Markdown } else { '' })
+    RutaJson             = $(if ($rutas) { [string]$rutas.Json } else { '' })
 }
 if ($nivelGlobal -eq 'ERROR') { exit 2 } elseif ($nivelGlobal -eq 'PARCIAL') { exit 0 } else { exit 0 }

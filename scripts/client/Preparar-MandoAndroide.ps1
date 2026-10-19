@@ -83,10 +83,22 @@ if ($Perfil) {
         if ($pf.controles -and $pf.controles.mapeoTactil -and $pf.controles.mapeoTactil.layout) {
             $layoutRef = $pf.controles.mapeoTactil.layout
         }
-        $rutaLayout = if ($layoutRef) { (Resolve-Path (Join-Path (Split-Path $ruta -Parent) $layoutRef) -ErrorAction SilentlyContinue).Path } else { $null }
-        $antichat = if ($pf.compatibilidadVm -and $pf.compatibilidadVm.antitrampas) { $pf.compatibilidadVm.antitrampas.vm } else { 'desconocida' }
+        # Nada de condicionales con propiedades opcionales dentro del interpolado: PowerShell
+        # arma un Expression.Condition y si una rama es AutomationNull (clave ausente en el
+        # JSON) y la otra string, el arbol no se construye -> 'Argument types do not match'.
+        $rutaLayout = $null
+        if ($layoutRef) {
+            $resuelto = Resolve-Path (Join-Path (Split-Path $ruta -Parent) $layoutRef) -ErrorAction SilentlyContinue
+            if ($resuelto) { $rutaLayout = [string]$resuelto.Path }
+        }
+        $antichat = 'desconocida'
+        if ($pf.compatibilidadVm -and $pf.compatibilidadVm.antitrampas) { $antichat = [string]$pf.compatibilidadVm.antitrampas.vm }
         Write-Host ''
-        Write-Host ("  perfil: {0} · modo tactil: {1} · layout: {2}" -f $pf.nombre, $(if ($pf.controles.mapeoTactil) { $pf.controles.mapeoTactil.modo } else { 'no definido' }), $(if ($layoutRef) { Split-Path $layoutRef -Leaf } else { 'ninguno' }))
+        $modoTactil = 'no definido'
+        if ($pf.controles.mapeoTactil -and $pf.controles.mapeoTactil.modo) { $modoTactil = [string]$pf.controles.mapeoTactil.modo }
+        $layoutNombre = 'ninguno'
+        if ($layoutRef) { $layoutNombre = [string](Split-Path $layoutRef -Leaf) }
+        Write-Host ("  perfil: {0} · modo tactil: {1} · layout: {2}" -f $pf.nombre, $modoTactil, $layoutNombre)
         if ($rutaLayout -and (Test-Path -LiteralPath $rutaLayout)) {
             $l = Get-Content -LiteralPath $rutaLayout -Raw -Encoding UTF8 | ConvertFrom-Json
             Write-Host ("  [OK]  layout {0} con {1} elementos ({2})" -f $l.nombre, @($l.elementos).Count, ($l.elementos | Group-Object tipo | ForEach-Object { "$($_.Count) $($_.Name)" }) -join ', ')

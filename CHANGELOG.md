@@ -104,17 +104,22 @@ primer push) y confirmado contra la documentacion de cada proveedor:
     dentro del cmdlet.
   - `New-GvmHallazgo` tenía `-Detalle` obligatorio: un hallazgo sin detalle (p. ej. el de
     Direct3D cuando `dxdiag` no informa) abortaba el script por binding.
-  - **`ConvertTo-Json` con un `[ordered]` dentro de una colección**: PowerShell recorre el
-    enumerable esperando `KeyValuePair<string,object>` y un `OrderedDictionary` entrega
-    `DictionaryEntry` → `ArgumentException: Argument types do not match` sin marco de script.
-    Afectaba a `remapshortcuts.json`/`remapkeys.json` (PowerToys), a `apps.json` (Sunshine) y a
-    la salida de `Test-ConexionRemota.ps1`. Los tres sitios construyen ahora el documento con
-    literales `[pscustomobject]` (conserva el orden de claves y se serializa por el camino
-    normal), y en el módulo queda escrita la regla para no volver a meter un `[ordered]`
-    dentro de una colección que acabe en `ConvertTo-Json`.
-  - `Invoke-GvmFase` solo registraba el mensaje de la excepción; ahora guarda
-    `ScriptName:linea` y las seis primeras líneas de la pila, que es como se localizaron estos
-    cuatro fallos.
+  - **`Argument types do not match` en las fases `gaming` e `informe`**: PowerShell 7 construye
+    los `if` usados como expresión con `Expression.Condition`, y si una rama devuelve
+    `AutomationNull` (una clave que no existe en el JSON convertido) y la otra un `string`, el
+    árbol no se compila y la excepción no trae ni un marco de script útil. Saltaba al generar
+    la ficha Markdown del layout táctil —`gaming/touch/layouts/plataformas-2d.json` tiene un
+    elemento `apuntar` sin `etiqueta`— y en los informes de GPU/preparación. Los valores
+    se resuelven ahora en variables con `[string]`/`[double]` explícitos
+    (`Set-TouchControls.ps1`, `Test-GamingReadiness.ps1`, `Install-GpuDriver.ps1`,
+    `Preparar-MandoAndroide.ps1`). Mismo criterio aplicado a los documentos que se escriben a
+    disco (`remapkeys.json`, `remapshortcuts.json`, `apps.json`): literales `[pscustomobject]`
+    en lugar de `[ordered]` anidados dentro de una colección, que es lo que `ConvertTo-Json`
+    tampoco acepta.
+  - `Invoke-GvmFase` solo registraba el mensaje de la excepción; ahora guarda `ScriptName:linea`,
+    el `TargetSite`/`ParamName` de la `ArgumentException`, las seis primeras líneas de la pila de
+    script y las cinco de la pila CLR, y el job de Windows envía esas líneas como anotaciones del
+    check. Con `Expression.Condition` como TargetSite se supo, al fin, dónde mirar.
 
 ### Conocido
 

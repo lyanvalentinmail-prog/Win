@@ -120,9 +120,9 @@ if (-not $info.Presente -or $code43.Count -gt 0 -or [string]::IsNullOrEmpty($inf
 $dx = Test-GvmDirectXDisponible
 $codificador = (Get-GvmGpuInfo).CodificadorHw
 $hallazgos = @(
-    New-GvmHallazgo -Item 'GPU visible' -Nivel $(if ($info.Presente) { 'OK' } else { 'ERROR' }) -Detalle $(if ($info.Presente) { $info.Resumen } else { 'el invitado no ve una GPU util' })
+    New-GvmHallazgo -Item 'GPU visible' -Nivel $(if ($info.Presente) { 'OK' } else { 'ERROR' }) -Detalle $(if ($info.Presente) { [string]$info.Resumen } else { 'el invitado no ve una GPU util' })
     New-GvmHallazgo -Item 'Direct3D acelerado (dxdiag)' -Nivel $(if ($dx.Disponible) { 'OK' } else { 'WARN' }) -Detalle "$($dx.Motivo) $($dx.Extracto)"
-    New-GvmHallazgo -Item 'Codificador de hardware' -Nivel $(if ($codificador -ne 'ninguno') { 'OK' } else { 'WARN' }) -Detalle "$(if ($codificador -eq 'ninguno') { 'Sunshine usara x264 (software) o el canal de juego quedara desactivado' } else { $codificador })"
+    New-GvmHallazgo -Item 'Codificador de hardware' -Nivel $(if ($codificador -ne 'ninguno') { 'OK' } else { 'WARN' }) -Detalle "$(if ($codificador -eq 'ninguno') { 'Sunshine usara x264 (software) o el canal de juego quedara desactivado' } else { [string]$codificador })"
     New-GvmHallazgo -Item 'Dispositivos con Code 43' -Nivel $(if ($code43.Count) { 'ERROR' } else { 'OK' }) -Detalle $(if ($code43.Count) { "revisa que el driver GRID es el soportado para $($size) (ver docs/12-troubleshooting.md)" } else { 'ninguno' })
 )
 

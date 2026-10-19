@@ -213,7 +213,11 @@ foreach ($p in $Perfil) {
     $sb = [System.Text.StringBuilder]::new()
     [void]$sb.AppendLine("# Ficha de control · $($pf.nombre)")
     [void]$sb.AppendLine("")
-    [void]$sb.AppendLine("Perfil: ``$($pf.id)`` · Canal recomendado: ``$canal`` · GPU: ``$(if ($gpu.Presente) { $gpu.Nombre } else { 'sin GPU' } )``")
+    # Igual que abajo con las etiquetas: una propiedad ausente llega como AutomationNull y
+    # mezclarla con un literal en un condicional revienta al compilar.
+    $gpuFicha = 'sin GPU'
+    if ($gpu.Presente -and $gpu.Nombre) { $gpuFicha = [string]$gpu.Nombre }
+    [void]$sb.AppendLine("Perfil: ``$($pf.id)`` · Canal recomendado: ``$canal`` · GPU: ``$gpuFicha``")
     [void]$sb.AppendLine("")
     [void]$sb.AppendLine("## Antes de tocar nada")
     [void]$sb.AppendLine($pf.compatibilidadVm.antitrampas.nota)
@@ -233,7 +237,16 @@ foreach ($p in $Perfil) {
         [void]$sb.AppendLine('|---|---|---:|---:|---:|---:|---|')
         foreach ($e in $layout.elementos) {
             $asig = "$($e.asignacion.tipo):$($e.asignacion.valor)"
-            [void]$sb.AppendLine("| $(if ($e.etiqueta) { $e.etiqueta } else { $e.id }) | ``$($e.tipo)`` | $([math]::Round($e.x * 100)) | $([math]::Round($e.y * 100)) | $([math]::Round($e.tamano * 100)) | $($e.opacidad) | ``$asig`` |")
+            # Nada de condicionales con propiedades opcionales dentro del interpolado: PowerShell
+            # arma un Expression.Condition y si una rama es AutomationNull (clave ausente en el
+            # JSON) y la otra string, el arbol no se construye -> 'Argument types do not match'.
+            $etiqueta = [string]$e.id
+            if ($e.etiqueta) { $etiqueta = [string]$e.etiqueta }
+            $xPct = [math]::Round([double]$e.x * 100)
+            $yPct = [math]::Round([double]$e.y * 100)
+            $tPct = [math]::Round([double]$e.tamano * 100)
+            $opPct = [string]$e.opacidad
+            [void]$sb.AppendLine("| $etiqueta | ``$($e.tipo)`` | $xPct | $yPct | $tPct | $opPct | ``$asig`` |")
         }
         [void]$sb.AppendLine("")
         [void]$sb.AppendLine("Pasos en Moonlight para Android: Ajustes → *Show on-screen controls* → durante la partida, engranaje → *Move/Resize buttons*.")
