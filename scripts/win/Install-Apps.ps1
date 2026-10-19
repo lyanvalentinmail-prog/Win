@@ -67,9 +67,9 @@ foreach ($s in $select) {
     if ($s -eq 'custom') { continue }
     $rutaSel = Join-Path $RepoDir "apps\selections\$s.json"
     if (-not (Test-Path -LiteralPath $rutaSel)) { Write-GvmLog -Nivel WARN -Fase $Fase -Mensaje "seleccion '$s' no existe ($rutaSel)"; continue }
-    foreach ($e in (Get-Content -LiteralPath $rutaSel -Raw -Encoding UTF8 | ConvertFrom-Json).aplicaciones) { $ids.Add($e.id) }
+    foreach ($e in (Get-Content -LiteralPath $rutaSel -Raw -Encoding UTF8 | ConvertFrom-Json).aplicaciones) { $null = $ids.Add($e.id) }
 }
-foreach ($c in @(Get-GvmConfigValor -Config $cfg -Ruta 'apps.custom' -PorDefecto @())) { if ($c.wingetId) { $ids.Add($c.wingetId) } }
+foreach ($c in @(Get-GvmConfigValor -Config $cfg -Ruta 'apps.custom' -PorDefecto @())) { if ($c.wingetId) { $null = $ids.Add($c.wingetId) } }
 $ids = @($ids | Select-Object -Unique)
 Write-GvmLog -Fase $Fase -Mensaje "conjuntos: $($select -join ', ') · apps a considerar: $($ids.Count)"
 
@@ -90,7 +90,7 @@ foreach ($id in $ids) {
     $app = $porId[$id.ToLowerInvariant()]
     if (-not $app) {
         $fallidas++
-        $resultados.Add([pscustomobject]@{ Id = $id; Estado = 'no-en-catalogo'; Detalle = 'el id no existe en apps/catalog.json: anadelo con su fuente oficial y su verificacion' })
+        $null = $resultados.Add([pscustomobject]@{ Id = $id; Estado = 'no-en-catalogo'; Detalle = 'el id no existe en apps/catalog.json: anadelo con su fuente oficial y su verificacion' })
         Write-GvmLog -Nivel ERROR -Fase $Fase -Mensaje "$id no esta en el catalogo (no se instala a ciegas)"
         continue
     }
@@ -100,21 +100,21 @@ foreach ($id in $ids) {
         if ($ediciones.Count -gt 0 -and $cfg.windows -and $cfg.windows.edition -notin $ediciones) {
             if ($skipNoCompat) {
                 $omitidas++
-                $resultados.Add([pscustomobject]@{ Id = $id; Estado = 'omitida'; Detalle = "edicion '$($cfg.windows.edition)' no listada en el catalogo para esta app" })
+                $null = $resultados.Add([pscustomobject]@{ Id = $id; Estado = 'omitida'; Detalle = "edicion '$($cfg.windows.edition)' no listada en el catalogo para esta app" })
                 Write-GvmLog -Nivel WARN -Fase $Fase -Mensaje "$id : edicion no listada como compatible -> omitida (apps.skipUnsupported)"
                 continue
             }
             Write-GvmLog -Nivel WARN -Fase $Fase -Mensaje "$id : edicion '$($cfg.windows.edition)' no listada como compatible; se intenta igualmente"
         }
         if ($app.compatibilidad.requiereGpu -and -not $gpu.Presente) {
-            if ($skipNoCompat) { $omitidas++; $resultados.Add([pscustomobject]@{ Id = $id; Estado = 'omitida'; Detalle = 'requiere GPU y el host no la ofrece' }); continue }
+            if ($skipNoCompat) { $omitidas++; $null = $resultados.Add([pscustomobject]@{ Id = $id; Estado = 'omitida'; Detalle = 'requiere GPU y el host no la ofrece' }); continue }
             Write-GvmLog -Nivel WARN -Fase $Fase -Mensaje "$($id): requiere GPU inexistente y skipUnsupported=false: se intentara igualmente"
         }
         if ($app.compatibilidad.requiereStore -and -not $tieneStore) {
-            $omitidas++; $resultados.Add([pscustomobject]@{ Id = $id; Estado = 'omitida'; Detalle = 'requiere Microsoft Store, no presente en esta edicion' }); continue
+            $omitidas++; $null = $resultados.Add([pscustomobject]@{ Id = $id; Estado = 'omitida'; Detalle = 'requiere Microsoft Store, no presente en esta edicion' }); continue
         }
         if ($app.compatibilidad.bloqueadoEnVm) {
-            $pendientes++; $resultados.Add([pscustomobject]@{ Id = $id; Estado = 'bloqueada-en-vm'; Detalle = $app.compatibilidad.nota })
+            $pendientes++; $null = $resultados.Add([pscustomobject]@{ Id = $id; Estado = 'bloqueada-en-vm'; Detalle = $app.compatibilidad.nota })
             Write-GvmLog -Nivel WARN -Fase $Fase -Mensaje "$($id): bloqueada en VM ($($app.compatibilidad.nota))"
             continue
         }
@@ -122,25 +122,25 @@ foreach ($id in $ids) {
     # 2) metodo
     if ($app.instalacion.metodo -ne 'winget') {
         $pendientes++
-        $resultados.Add([pscustomobject]@{ Id = $id; Estado = 'pendiente-manual'; Detalle = "metodo '$($app.instalacion.metodo)': el proyecto no lo automatiza ($($app.instalacion.nota))" })
+        $null = $resultados.Add([pscustomobject]@{ Id = $id; Estado = 'pendiente-manual'; Detalle = "metodo '$($app.instalacion.metodo)': el proyecto no lo automatiza ($($app.instalacion.nota))" })
         Write-GvmLog -Fase $Fase -Mensaje "$($id): accion manual documentada ($($app.instalacion.metodo))"
         continue
     }
     if (-not $wingetDisponible) {
-        $fallidas++; $resultados.Add([pscustomobject]@{ Id = $id; Estado = 'sin-dependencia'; Detalle = 'winget no disponible en esta imagen' }); continue
+        $fallidas++; $null = $resultados.Add([pscustomobject]@{ Id = $id; Estado = 'sin-dependencia'; Detalle = 'winget no disponible en esta imagen' }); continue
     }
     # 3) fuente oficial declarada
     if ($app.fuente.descargaDirecta -and $bloquearNoOficial) {
         $o = Test-GvmOrigenPermitido -Url $app.fuente.descargaDirecta -SourcesPath (Join-Path $RepoDir 'apps\sources.json')
         if (-not $o.Permitido) {
-            $fallidas++; $resultados.Add([pscustomobject]@{ Id = $id; Estado = 'rechazada-fuente'; Detalle = $o.Motivo })
+            $fallidas++; $null = $resultados.Add([pscustomobject]@{ Id = $id; Estado = 'rechazada-fuente'; Detalle = $o.Motivo })
             Write-GvmLog -Nivel ERROR -Fase $Fase -Mensaje "$($id): fuente no autorizada" -Detalle $o.Motivo
             continue
         }
     }
     if ($SoloVerificar) {
         $act = Get-GvmAppInstalada -Id $id
-        $resultados.Add([pscustomobject]@{ Id = $id; Estado = $(if ($act) { 'instalada' } else { 'no-instalada' }); Detalle = $(if ($act) { "$($act.Version) ($($act.Fuente))" } else { 'winget list no la encuentra' }) })
+        $null = $resultados.Add([pscustomobject]@{ Id = $id; Estado = $(if ($act) { 'instalada' } else { 'no-instalada' }); Detalle = $(if ($act) { "$($act.Version) ($($act.Fuente))" } else { 'winget list no la encuentra' }) })
         continue
     }
 
@@ -204,7 +204,7 @@ foreach ($id in $ids) {
     } else {
         $fallidas++
     }
-    $resultados.Add([pscustomobject]$registro)
+    $null = $resultados.Add([pscustomobject]$registro)
 }
 
 $hallazgos = @(

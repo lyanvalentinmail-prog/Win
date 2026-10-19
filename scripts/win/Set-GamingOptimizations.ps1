@@ -39,7 +39,7 @@ $requiereReinicio = $false
 
 function Add-Resultado {
     param([string]$Item, [string]$Estado, [string]$Detalle)
-    $detallado.Add([pscustomobject]@{ item = $Item; estado = $Estado; detalle = $Detalle })
+    $null = $detallado.Add([pscustomobject]@{ item = $Item; estado = $Estado; detalle = $Detalle })
     switch ($Estado) {
         'aplicado' { $script:aplicados++ }
         'omitido' { $script:omitidos++ }

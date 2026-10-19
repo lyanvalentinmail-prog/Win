@@ -138,7 +138,7 @@ Invoke-GvmFase 'gpu' {
     $params = @{ Config = $cfg }
     if ($Simulacion) { $params['WhatIf'] = $true }
     $r = & $script @params
-    if ($r.RequiereReinicio) { $pendientesReinicio.Add('gpu') }
+    if ($r.RequiereReinicio) { $null = $pendientesReinicio.Add('gpu') }
     if ($r.Estado -eq 'sin-gpu') {
         Write-GvmLog -Nivel WARN -Fase gpu -Mensaje 'El host no tiene GPU util: no se simulera. Los canales que dependen de GPU quedan desactivados.' -Detalle $r.Detalle
     }
@@ -150,7 +150,7 @@ Invoke-GvmFase 'escritorio' {
     $params = @{}
     if ($Simulacion) { $params['WhatIf'] = $true }
     $r = & (Join-Path $PSScriptRoot 'Set-GamingOptimizations.ps1') -Config $cfg @params
-    if ($r.RequiereReinicio) { $pendientesReinicio.Add('escritorio') }
+    if ($r.RequiereReinicio) { $null = $pendientesReinicio.Add('escritorio') }
     "optimizaciones: $($r.Aplicados) aplicados, $($r.Omitidos) omitidos, $($r.Advertencias) avisos"
 }
 
@@ -159,7 +159,7 @@ Invoke-GvmFase 'remoto' {
     $params = @{}
     if ($Simulacion) { $params['WhatIf'] = $true }
     $r = & (Join-Path $PSScriptRoot 'Set-RemoteDesktop.ps1') -Config $cfg @params
-    if ($r.RequiereReinicio) { $pendientesReinicio.Add('remoto') }
+    if ($r.RequiereReinicio) { $null = $pendientesReinicio.Add('remoto') }
     "rdp: puerto $($r.Puerto), nla=$($r.Nla), udp=$($r.Udp), avc444=$($r.Avc444)"
 }
 
@@ -177,7 +177,7 @@ Invoke-GvmFase 'gaming' {
     if ($Simulacion) { $params['WhatIf'] = $true }
     $s = & (Join-Path $PSScriptRoot 'Set-Sunshine.ps1') -Config $cfg @params
     $t = & (Join-Path $PSScriptRoot 'Set-TouchControls.ps1') -Config $cfg @params
-    if ($s.RequiereReinicio) { $pendientesReinicio.Add('sunshine') }
+    if ($s.RequiereReinicio) { $null = $pendientesReinicio.Add('sunshine') }
     "canal-juego: $($s.Estado) · controles: $($t.Perfiles) perfiles aplicados"
 }
 

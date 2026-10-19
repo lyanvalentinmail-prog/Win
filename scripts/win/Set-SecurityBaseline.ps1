@@ -35,7 +35,7 @@ $Fase = 'seguridad'
 $aplicados = 0; $avisos = 0
 $detallado = New-Object System.Collections.Generic.List[object]
 function Add-Item { param([string]$i, [string]$e, [string]$d)
-    $detallado.Add([pscustomobject]@{ item = $i; estado = $e; detalle = $d })
+    $null = $detallado.Add([pscustomobject]@{ item = $i; estado = $e; detalle = $d })
     if ($e -eq 'aplicado') { $script:aplicados++ } elseif ($e -eq 'aviso') { $script:avisos++ }
 }
 

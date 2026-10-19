@@ -150,23 +150,23 @@ if ($primero.juego -and @($primero.juego.procesos).Count -gt 0) { $targetApp = (
 foreach ($t in @($primero.controles.teclas)) {
     $origen = Get-VkCode ([string]$t.original)
     $destino = Get-VkCode ([string]$t.nuevo)
-    if ($null -eq $destino) { $pendientes.Add("el destino '$($t.nuevo)' no es una tecla reconocible (puede ser un boton de raton: configurar en el cliente o con AntiMicroX)") ; continue }
+    if ($null -eq $destino) { $null = $pendientes.Add("el destino '$($t.nuevo)' no es una tecla reconocible (puede ser un boton de raton: configurar en el cliente o con AntiMicroX)") ; continue }
     if ($null -eq $origen) {
         # Botones de mando (gamepad-*) NO son remapeables por Keyboard Manager: eso es trabajo
         # de Steam Input / AntiMicroX. Se registra como pendiente en lugar de perder el mapeo.
-        $pendientes.Add("el origen '$($t.original)' es un boton de mando: usar Steam Input o AntiMicroX (ver gaming/steam/README.md)")
+        $null = $pendientes.Add("el origen '$($t.original)' es un boton de mando: usar Steam Input o AntiMicroX (ver gaming/steam/README.md)")
         continue
     }
-    $keys.Add([pscustomobject]@{ originalKey = $origen; newKey = $destino })
+    $null = $keys.Add([pscustomobject]@{ originalKey = $origen; newKey = $destino })
 }
 foreach ($a in @($primero.controles.atajos)) {
     if ($a.via -ne 'powertoys-keyboard-manager') { continue }
     $partes = @($a.teclas -split '\+')
-    $orig = @(); foreach ($p in $partes) { $c = Get-VkCode $p; if ($null -ne $c) { $orig += $c } else { $pendientes.Add("atajo '$($a.nombre)': tecla '$p' no reconocida") } }
-    if ($orig.Count -lt 2) { $pendientes.Add("atajo '$($a.nombre)' ignorado: se necesitan al menos 2 teclas para un acceso directo"); continue }
+    $orig = @(); foreach ($p in $partes) { $c = Get-VkCode $p; if ($null -ne $c) { $orig += $c } else { $null = $pendientes.Add("atajo '$($a.nombre)': tecla '$p' no reconocida") } }
+    if ($orig.Count -lt 2) { $null = $pendientes.Add("atajo '$($a.nombre)' ignorado: se necesitan al menos 2 teclas para un acceso directo"); continue }
     # pscustomobject, no [ordered]: dentro de una coleccion ConvertTo-Json no sabe que hacer
     # con un OrderedDictionary y el fichero de PowerToys no se escribe; la regla esta anotada junto a New-GvmInforme en GamingVM.psm1.
-    $shortcuts.Add([pscustomobject]@{ originalKeys = $orig; targetApp = $targetApp; newRemapKeys = @(112) })   # F2: abrir menu de captura
+    $null = $shortcuts.Add([pscustomobject]@{ originalKeys = $orig; targetApp = $targetApp; newRemapKeys = @(112) })   # F2: abrir menu de captura
 }
 
 if ($keys.Count -gt 0 -or $shortcuts.Count -gt 0) {
@@ -207,7 +207,7 @@ foreach ($p in $Perfil) {
         $rutaLayout = Join-Path $RepoDir ((Join-Path 'gaming\profiles' $layoutRel) -replace '\\+', '\')
         try { $rutaLayout = (Resolve-Path -LiteralPath $rutaLayout).Path } catch { }
         if (Test-Path -LiteralPath $rutaLayout) { $layout = Get-Content -LiteralPath $rutaLayout -Raw -Encoding UTF8 | ConvertFrom-Json }
-        else { $pendientes.Add("el layout '$layoutRel' del perfil '$p' no existe: la ficha se genera sin el") }
+        else { $null = $pendientes.Add("el layout '$layoutRel' del perfil '$p' no existe: la ficha se genera sin el") }
     }
 
     $sb = [System.Text.StringBuilder]::new()

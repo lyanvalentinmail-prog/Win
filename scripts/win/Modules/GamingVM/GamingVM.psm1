@@ -776,7 +776,12 @@ function Set-GvmTareaProgramada {
 }
 
 # Regla para cualquier documento que acabe en un ConvertTo-Json: dentro de una coleccion
-# (array o List) solo puede haber [pscustomobject] o valores simples. Un OrderedDictionary —
+# (array o List) solo puede haber [pscustomobject] o valores simples.
+# Y regla para los if/else de los scripts: ninguna rama puede devolver un tipo distinto de la
+# otra. Un List.Add() devuelve el indice (int), y 'if (x) { $v += 1 } else { $lista.Add(..) }'
+# hace que PowerShell monte un Expression.Condition con ramas incompatibles y falle al
+# COMPILAR con 'Argument types do not match', sin marco de script donde mire el que llama. Por
+# eso los .Add() de acumulacion van con '$null =' en todos los scripts de fase. Un OrderedDictionary —
 # lo que produce [ordered]@{}-- dentro de una coleccion hace que el writer de .NET pida
 # KeyValuePair<string,object>, reciba DictionaryEntry y lance ArgumentException 'Argument types
 # do not match' sin dejar ni un marco de script util en la pila. De primer nivel o como valor

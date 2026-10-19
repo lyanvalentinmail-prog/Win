@@ -143,12 +143,12 @@ switch ($Modo) {
                 $ping.Dispose()
             }
             if ($muestras.Count -eq 0) {
-                $res.Add([pscustomobject]@{ Objetivo = $o; Enviados = $Paquetes; Recibidos = 0; Perdida = 100; Media = 'n/d'; P95 = 'n/d'; Min = 'n/d'; Max = 'n/d'; Metodo = $(if ($o -like 'tcp:*') { 'tcp-connect' } else { 'icmp' }) })
+                $null = $res.Add([pscustomobject]@{ Objetivo = $o; Enviados = $Paquetes; Recibidos = 0; Perdida = 100; Media = 'n/d'; P95 = 'n/d'; Min = 'n/d'; Max = 'n/d'; Metodo = $(if ($o -like 'tcp:*') { 'tcp-connect' } else { 'icmp' }) })
                 continue
             }
             $ordenados = @($muestras | Sort-Object)
             $idx = [math]::Min($ordenados.Count - 1, [math]::Floor($ordenados.Count * 0.95))
-            $res.Add([pscustomobject]@{
+            $null = $res.Add([pscustomobject]@{
                 Objetivo  = $o
                 Enviados  = $Paquetes
                 Recibidos = $muestras.Count
@@ -167,8 +167,8 @@ switch ($Modo) {
         $out = New-Object System.Collections.Generic.List[object]
         try { $res = @(query.exe session 2>&1 | Out-String) -split "`r?`n" } catch { $res = @() }
         $ev = @(Get-WinEvent -FilterHashtable @{ LogName = 'Microsoft-Windows-TerminalServices-LocalSessionManager/Operational'; Id = 21, 22, 24, 25 } -MaxEvents 12 -ErrorAction SilentlyContinue)
-        foreach ($e in $ev) { $out.Add([pscustomobject]@{ Tipo = 'evento'; Hora = $e.TimeCreated.ToString('s'); Detalle = ($e.Message -replace "`r?`n", ' ') }) }
-        foreach ($l in $res) { if ($l -match '\S') { $out.Add([pscustomobject]@{ Tipo = 'query-session'; Hora = ''; Detalle = $l.Trim() }) } }
+        foreach ($e in $ev) { $null = $out.Add([pscustomobject]@{ Tipo = 'evento'; Hora = $e.TimeCreated.ToString('s'); Detalle = ($e.Message -replace "`r?`n", ' ') }) }
+        foreach ($l in $res) { if ($l -match '\S') { $null = $out.Add([pscustomobject]@{ Tipo = 'query-session'; Hora = ''; Detalle = $l.Trim() }) } }
         $out
     }
 }

@@ -105,17 +105,25 @@ primer push) y confirmado contra la documentacion de cada proveedor:
   - `New-GvmHallazgo` tenía `-Detalle` obligatorio: un hallazgo sin detalle (p. ej. el de
     Direct3D cuando `dxdiag` no informa) abortaba el script por binding.
   - **`Argument types do not match` en las fases `gaming` e `informe`**: PowerShell 7 construye
-    los `if` usados como expresión con `Expression.Condition`, y si una rama devuelve
-    `AutomationNull` (una clave que no existe en el JSON convertido) y la otra un `string`, el
-    árbol no se compila y la excepción no trae ni un marco de script útil. Saltaba al generar
-    la ficha Markdown del layout táctil —`gaming/touch/layouts/plataformas-2d.json` tiene un
-    elemento `apuntar` sin `etiqueta`— y en los informes de GPU/preparación. Los valores
-    se resuelven ahora en variables con `[string]`/`[double]` explícitos
-    (`Set-TouchControls.ps1`, `Test-GamingReadiness.ps1`, `Install-GpuDriver.ps1`,
-    `Preparar-MandoAndroide.ps1`). Mismo criterio aplicado a los documentos que se escriben a
-    disco (`remapkeys.json`, `remapshortcuts.json`, `apps.json`): literales `[pscustomobject]`
-    en lugar de `[ordered]` anidados dentro de una colección, que es lo que `ConvertTo-Json`
-    tampoco acepta.
+    los `if`/`else` que aparecen en contexto de expresión con un único nodo
+    `Expression.Condition`, y si las dos ramas no devuelven el mismo tipo estático el árbol no
+    se compila. Dos formas de tropezar ahí en este repo: un condicional con una rama
+    `AutomationNull` (clave ausente en el objeto que salió de `ConvertFrom-Json`, p. ej. el
+    elemento `apuntar` de `gaming/touch/layouts/plataformas-2d.json`, que no tiene `etiqueta`)
+    y otra `string`; y un `if (x) { $v += 1 } else { $lista.Add(..) }`, porque `List.Add()`
+    devuelve el índice (`int`) en vez de no devolver nada. Como el fallo es al compilar, la
+    traza del runner apuntaba a una linea sin relación (la del `New-GvmInforme` o la del primer
+    statement del bloque), que es lo que lo hizo tan caro de cazar.
+    Arreglado con el mismo criterio en `Set-TouchControls.ps1`, `Test-GamingReadiness.ps1`,
+    `Install-GpuDriver.ps1`, `Preparar-MandoAndroide.ps1`, `Install-Apps.ps1`,
+    `Get-SystemMetrics.ps1`, `Set-{GamingOptimizations,RemoteDesktop,SecurityBaseline}.ps1` y
+    `Bootstrap-GamingVM.ps1`: los valores opcionales se resuelven en variables con
+    `[string]`/`[double]` explícitos, y los `.Add()` de acumulación van con `$null =` (de paso
+    deja de colarse índices .NET en la salida de la fase, que el bootstrap serializa en el
+    checkpoint). Los documentos que se escriben a disco (`remapkeys.json`,
+    `remapshortcuts.json`, `apps.json`) usan literales `[pscustomobject]` en lugar de `[ordered]`
+    anidados dentro de una colección, que es otro caso en el que `ConvertTo-Json` se queda sin
+    camino. La regla queda escrita en `GamingVM.psm1`, junto a `New-GvmInforme`.
   - `Invoke-GvmFase` solo registraba el mensaje de la excepción; ahora guarda `ScriptName:linea`,
     el `TargetSite`/`ParamName` de la `ArgumentException`, las seis primeras líneas de la pila de
     script y las cinco de la pila CLR, y el job de Windows envía esas líneas como anotaciones del

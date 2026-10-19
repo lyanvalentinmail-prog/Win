@@ -37,7 +37,7 @@ $cfg = Resolve-GvmConfig -Entrada $Config
 $Fase = 'remoto'
 $requiereReinicio = $false
 $detallado = New-Object System.Collections.Generic.List[object]
-function Add-Item { param([string]$i, [string]$e, [string]$d) $detallado.Add([pscustomobject]@{ item = $i; estado = $e; detalle = $d }) }
+function Add-Item { param([string]$i, [string]$e, [string]$d) $null = $detallado.Add([pscustomobject]@{ item = $i; estado = $e; detalle = $d }) }
 
 if (-not $RepoDir) {
     foreach ($c in @($env:GVM_REPO_DIR, 'C:\ProgramData\WinGamingVM\repo', (Join-Path $PSScriptRoot '..\..'))) {
