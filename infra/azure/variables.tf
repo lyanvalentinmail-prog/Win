@@ -49,8 +49,13 @@ variable "vm_admin_user" {
   default     = "gamingadmin"
   description = "Usuario administrador local. Azure reserva ciertos nombres (admin, administrator, ...)."
   validation {
-    condition     = can(regex("^(?!.(?:admin|administrator|azureuser|test|user)$)[A-Za-z][A-Za-z0-9_]{2,19}$", var.vm_admin_user))
-    error_message = "3-20 caracteres, letra inicial, sin espacios ni caracteres reservados por Azure/Windows."
+    # Terraform evalua las expresiones con RE2, que NO admite lookaheads: "(?!...)" hacia
+    # que la comprobacion fallara siempre (y el propio valor por defecto no pasaba).
+    condition = (
+      can(regex("^[A-Za-z][A-Za-z0-9_]{2,19}$", var.vm_admin_user)) &&
+      !contains(["admin", "administrator", "azureuser", "test", "user", "operator", "backup", "sql", "system", "password"], lower(var.vm_admin_user))
+    )
+    error_message = "3-20 caracteres alfanumericos empezando por letra, y ni uno de los nombres que Azure/Windows reservan (admin, administrator, azureuser, test, user...)."
   }
 }
 

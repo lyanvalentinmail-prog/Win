@@ -67,6 +67,7 @@ resource "azurerm_network_security_rule" "rdp" {
   source_port_range           = "*"
   destination_port_range      = tostring(var.rdp_port)
   source_address_prefixes     = var.rdp_allowed_cidrs
+  destination_address_prefix  = "*"
   description                 = "Windows App (RDP) desde las IP del usuario; gestionado por infra/azure"
 }
 
@@ -83,6 +84,7 @@ resource "azurerm_network_security_rule" "rdp_udp" {
   source_port_range           = "*"
   destination_port_range      = tostring(var.rdp_port)
   source_address_prefixes     = var.rdp_allowed_cidrs
+  destination_address_prefix  = "*"
   description                 = "Canal UDP de RDP (mejora la fluidez; se negocia con el cliente)"
 }
 
@@ -100,6 +102,7 @@ resource "azurerm_network_security_rule" "game_stream" {
   source_port_range           = "*"
   destination_port_ranges     = ["47984", "47989", "47990", "48010"]
   source_address_prefixes     = var.rdp_allowed_cidrs
+  destination_address_prefix  = "*"
   description                 = "Sunshine (canal de juego). Los puertos UDP 47998-48002 se abren dentro de la VM via Set-Sunshine.ps1"
 }
 

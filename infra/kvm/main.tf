@@ -167,6 +167,9 @@ resource "libvirt_domain" "win" {
     # Windows 11 solo se soporta en UEFI + Secure Boot + vTPM. El loader "secboot" ya
     # trae el verificador; loader_secure se deja fuera porque su valor depende de la
     # builds de OVMF del host (algunas lo ignoran y otras lo exigen).
+    # Las dos ramas del condicional tienen que tener el MISMO tipo de objeto: un {} vacio
+    # no unifica con el objeto de UEFI ('Inconsistent conditional result types'), asi que la
+    # rama falsa repite las claves con null (= no tocar el atributo).
     var.uefi ? {
       firmware        = "efi"
       loader          = var.uefi_code_fd
@@ -175,7 +178,12 @@ resource "libvirt_domain" "win" {
         nv_ram   = "/var/lib/libvirt/qemu/nvram/${var.name}-VARS.fd"
         template = var.uefi_vars_fd
       }
-    } : {},
+    } : {
+      firmware        = null
+      loader          = null
+      loader_readonly = null
+      nv_ram          = null
+    },
   )
 
   # host-passthrough es lo que rinde en gaming (instrucciones del CPU real, sin
@@ -251,11 +259,10 @@ resource "libvirt_domain" "win" {
       },
     ]
 
+    # 'source' fuera a proposito: la schema 0.9 exige source.pty.path si escribes
+    # source.pty, y pty es ya el default de libvirt para un console.
     consoles = [
       {
-        source = {
-          pty = {}
-        }
         target = {
           type = "isa-serial"
           port = 0
