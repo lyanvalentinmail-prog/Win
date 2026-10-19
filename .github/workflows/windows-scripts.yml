@@ -99,8 +99,38 @@ jobs:
       - name: Preflight y simulacion (sin permisos de admin, sin cambios)
         shell: pwsh
         run: |
-          ./scripts/win/Bootstrap-GamingVM.ps1 -Fases preflight -Simulacion
-          ./scripts/win/Bootstrap-GamingVM.ps1 -Simulacion
+          # El runner de Windows es el unico sitio donde estos scripts se ejecutan de verdad,
+          # asi que el fallo tiene que decir algo mas que "exit 2": se reenvian las ultimas
+          # lineas del log del bootstrap (que si explican la fase y el motivo) como
+          # anotaciones del check.
+          $base = Join-Path $env:ProgramData 'WinGamingVM'
+          $casos = @(
+            @{ Nombre = 'preflight'; Fases = @('preflight'); Simulacion = $true },
+            @{ Nombre = 'simulacion completa'; Fases = @(); Simulacion = $true }
+          )
+          foreach ($caso in $casos) {
+            $arguments = @{ Simulacion = $true }
+            if ($caso.Fases.Count) { $arguments['Fases'] = $caso.Fases }
+            try {
+              & ./scripts/win/Bootstrap-GamingVM.ps1 @arguments
+            } catch {
+              Write-Host "::error::Bootstrap-GamingVM ($($caso.Nombre)) lanzo: $($_.Exception.Message)"
+            }
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host "::error::Bootstrap-GamingVM ($($caso.Nombre)) salio con codigo $LASTEXITCODE"
+              $log = Get-ChildItem (Join-Path $base 'logs') -Filter '*.log' -ErrorAction SilentlyContinue |
+                Sort-Object LastWriteTime -Descending | Select-Object -First 1
+              if ($log) {
+                Get-Content -LiteralPath $log.FullName -Tail 45 | ForEach-Object {
+                  Write-Host "::error::log|$($_ -replace '[\r\n]', ' '}"
+                }
+              } else {
+                Write-Host '::error::no hay log en C:\ProgramData\WinGamingVM\logs: el script murio antes de abrirlo'
+              }
+              exit 1
+            }
+            Write-Host "OK Bootstrap-GamingVM ($($caso.Nombre))"
+          }
 
       - name: 'Informe de preparacion (informativo: el runner no es una VM de gaming)'
         continue-on-error: true
