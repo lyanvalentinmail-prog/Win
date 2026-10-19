@@ -12,7 +12,7 @@ output "id_instancia" {
 
 output "obtener_contrasena_inicial" {
   description = "La contrasena se recupera con tu clave privada, NUNCA se guarda en el repo ni en outputs."
-  value       = join(" ", [
+  value = join(" ", [
     "aws ec2 get-password-data --instance-id", aws_instance.win.id,
     "--priv-launch-key ~/.ssh/", var.key_name, ".pem"
   ])

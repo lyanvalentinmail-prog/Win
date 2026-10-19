@@ -14,7 +14,7 @@ output "montar_medios_de_instalacion" {
     "virsh attach-disk ${libvirt_domain.win.name} ${var.virtio_iso_path} hdd --type cdrom --mode readonly",
     "virt-viewer -c ${var.libvirt_uri} ${libvirt_domain.win.name}",
     "cuando acabe: virsh detach-disk ${libvirt_domain.win.name} hdc && virsh detach-disk ${libvirt_domain.win.name} hdd",
-  ] : [
+    ] : [
     "la VM ya arranca del disco: no hay cdroms que montar (var.instalar_desde_iso = false)",
   ]
 }
